@@ -1,0 +1,13 @@
+---
+source: tests/snapshot_tests.rs
+expression: file_paths
+---
+[
+    "functions.md",
+    "index.md",
+    "nested.md",
+    "nested/inner.md",
+    "nested/inner/deep.md",
+    "test_crate.md",
+    "types.md",
+]

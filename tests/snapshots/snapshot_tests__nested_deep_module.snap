@@ -1,0 +1,39 @@
+---
+source: tests/snapshot_tests.rs
+expression: deep_content
+---
+**test_crate > nested > inner > deep**
+
+# Module: nested::inner::deep
+
+## Contents
+
+**Structs**
+
+- [`DeepStruct`](#deepstruct)
+
+**Functions**
+
+- [`deep_function`](#deep_function)
+
+---
+
+## test_crate::nested::inner::deep::DeepStruct
+
+**Type:** Struct
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `data` | `String` | - |
+
+
+
+## test_crate::nested::inner::deep::deep_function
+
+**Type:** Function
+
+```rust
+fn deep_function() -> i32
+```

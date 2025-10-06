@@ -1,0 +1,498 @@
+---
+source: tests/snapshot_tests.rs
+expression: markdown
+---
+# test_crate
+
+## Table of Contents
+
+- **test_crate**
+  - [ComplexEnum](#test_crate-complexenum)
+  - [Error](#test_crate-error)
+  - [GenericEnum](#test_crate-genericenum)
+  - [GenericStruct](#test_crate-genericstruct)
+  - [MAX_SIZE](#test_crate-max_size)
+  - [MyTrait](#test_crate-mytrait)
+  - [PlainStruct](#test_crate-plainstruct)
+  - [Result](#test_crate-result)
+  - [SimpleEnum](#test_crate-simpleenum)
+  - [TupleStruct](#test_crate-tuplestruct)
+  - [UnitStruct](#test_crate-unitstruct)
+  - [function_with_args](#test_crate-function_with_args)
+  - [function_with_result](#test_crate-function_with_result)
+  - [functions](#test_crate-functions)
+  - [generic_function](#test_crate-generic_function)
+  - [nested](#test_crate-nested)
+  - [simple_function](#test_crate-simple_function)
+  - [types](#test_crate-types)
+- **functions**
+  - [add](#test_crate-functions-add)
+  - [async_function](#test_crate-functions-async_function)
+  - [const_function](#test_crate-functions-const_function)
+  - [higher_order_function](#test_crate-functions-higher_order_function)
+  - [multiply](#test_crate-functions-multiply)
+  - [process_mut_slice](#test_crate-functions-process_mut_slice)
+  - [process_slice](#test_crate-functions-process_slice)
+  - [unsafe_function](#test_crate-functions-unsafe_function)
+- **nested**
+  - [OuterStruct](#test_crate-nested-outerstruct)
+  - [inner](#test_crate-nested-inner)
+- **nested::inner**
+  - [InnerStruct](#test_crate-nested-inner-innerstruct)
+  - [deep](#test_crate-nested-inner-deep)
+  - [inner_function](#test_crate-nested-inner-inner_function)
+- **nested::inner::deep**
+  - [DeepStruct](#test_crate-nested-inner-deep-deepstruct)
+  - [deep_function](#test_crate-nested-inner-deep-deep_function)
+- **types**
+  - [Container](#test_crate-types-container)
+  - [DEFAULT_CAPACITY](#test_crate-types-default_capacity)
+  - [RefStruct](#test_crate-types-refstruct)
+  - [Status](#test_crate-types-status)
+  - [StringMap](#test_crate-types-stringmap)
+
+
+---
+
+# Module: `test_crate`
+
+## test_crate::ComplexEnum
+
+**Type:** Enum
+
+**Variants:**
+
+| Variant | Kind | Description |
+|---------|------|-------------|
+| `Unit` | Unit | - |
+| `Tuple` | Tuple(String, i32) | - |
+| `Struct` | Struct (2 fields) | - |
+
+
+
+## test_crate::Error
+
+**Type:** Struct
+
+**Trait Implementations:**
+
+- **Debug**
+  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+
+
+
+## test_crate::GenericEnum
+
+**Type:** Enum
+
+**Generic Parameters:**
+- T
+
+**Variants:**
+
+| Variant | Kind | Description |
+|---------|------|-------------|
+| `Some` | Tuple(T) | - |
+| `None` | Unit | - |
+
+
+
+## test_crate::GenericStruct
+
+**Type:** Struct
+
+**Generic Parameters:**
+- T
+- U
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `first` | `T` | - |
+| `second` | `U` | - |
+
+**Methods:**
+
+- `fn new(first: T, second: U) -> Self` - 
+- `fn swap(self: Self) -> GenericStruct<U, T>` - 
+
+
+
+## test_crate::MAX_SIZE
+
+**Type:** Constant
+
+
+
+## test_crate::MyTrait
+
+**Type:** Trait
+
+**Methods:**
+
+- `required_method`
+- `provided_method`
+
+
+
+## test_crate::PlainStruct
+
+**Type:** Struct
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `name` | `String` | - |
+| `value` | `i32` | - |
+
+**Methods:**
+
+- `fn new(name: String, value: i32) -> Self` - 
+- `fn get_value(self: &Self) -> i32` - 
+
+**Trait Implementations:**
+
+- **MyTrait**
+  - `fn required_method(self: &Self) -> String` - 
+- **Clone**
+  - `fn clone(self: &Self) -> PlainStruct` - 
+- **Debug**
+  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+
+
+
+## test_crate::Result
+
+**Type:** Type Alias
+
+
+
+## test_crate::SimpleEnum
+
+**Type:** Enum
+
+**Variants:**
+
+| Variant | Kind | Description |
+|---------|------|-------------|
+| `VariantA` | Unit | - |
+| `VariantB` | Unit | - |
+| `VariantC` | Unit | - |
+
+**Implemented Traits:** Eq, StructuralPartialEq
+
+**Trait Implementations:**
+
+- **PartialEq**
+  - `fn eq(self: &Self, other: &SimpleEnum) -> bool` - 
+- **Clone**
+  - `fn clone(self: &Self) -> SimpleEnum` - 
+- **Debug**
+  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+
+
+
+## test_crate::TupleStruct
+
+**Type:** Struct
+
+**Tuple Struct** with 2 field(s)
+
+
+
+## test_crate::UnitStruct
+
+**Type:** Struct
+
+**Unit Struct**
+
+
+
+## test_crate::function_with_args
+
+**Type:** Function
+
+```rust
+fn function_with_args(name: &str, value: i32) -> String
+```
+
+
+
+## test_crate::function_with_result
+
+**Type:** Function
+
+```rust
+fn function_with_result(value: i32) -> Result<String>
+```
+
+
+
+## Module: functions
+
+
+
+## test_crate::generic_function
+
+**Type:** Function
+
+```rust
+fn generic_function<T>(item: T) -> String
+```
+
+
+
+## Module: nested
+
+
+
+## test_crate::simple_function
+
+**Type:** Function
+
+```rust
+fn simple_function()
+```
+
+
+
+## Module: types
+
+
+
+---
+
+# Module: `test_crate::functions`
+
+## test_crate::functions::add
+
+**Type:** Function
+
+```rust
+fn add(a: i32, b: i32) -> i32
+```
+
+
+
+## test_crate::functions::async_function
+
+**Type:** Function
+
+```rust
+fn async_function(url: &str) -> Result<String, String>
+```
+
+
+
+## test_crate::functions::const_function
+
+**Type:** Function
+
+```rust
+fn const_function(x: i32) -> i32
+```
+
+
+
+## test_crate::functions::higher_order_function
+
+**Type:** Function
+
+```rust
+fn higher_order_function<F>(f: F) -> i32
+```
+
+
+
+## test_crate::functions::multiply
+
+**Type:** Function
+
+```rust
+fn multiply<T>(a: T, b: T) -> T
+```
+
+
+
+## test_crate::functions::process_mut_slice
+
+**Type:** Function
+
+```rust
+fn process_mut_slice(data: & mut [u8])
+```
+
+
+
+## test_crate::functions::process_slice
+
+**Type:** Function
+
+```rust
+fn process_slice(data: &[u8]) -> Vec<u8>
+```
+
+
+
+## test_crate::functions::unsafe_function
+
+**Type:** Function
+
+```rust
+fn unsafe_function(ptr: *const u8) -> u8
+```
+
+
+
+---
+
+# Module: `test_crate::nested`
+
+## test_crate::nested::OuterStruct
+
+**Type:** Struct
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `inner` | `inner::InnerStruct` | - |
+
+
+
+## Module: inner
+
+
+
+---
+
+# Module: `test_crate::nested::inner`
+
+## test_crate::nested::inner::InnerStruct
+
+**Type:** Struct
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `i32` | - |
+
+
+
+## Module: deep
+
+
+
+## test_crate::nested::inner::inner_function
+
+**Type:** Function
+
+```rust
+fn inner_function() -> &'static str
+```
+
+
+
+---
+
+# Module: `test_crate::nested::inner::deep`
+
+## test_crate::nested::inner::deep::DeepStruct
+
+**Type:** Struct
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `data` | `String` | - |
+
+
+
+## test_crate::nested::inner::deep::deep_function
+
+**Type:** Function
+
+```rust
+fn deep_function() -> i32
+```
+
+
+
+---
+
+# Module: `test_crate::types`
+
+## test_crate::types::Container
+
+**Type:** Struct
+
+**Generic Parameters:**
+- T
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `items` | `Vec<T>` | - |
+
+**Methods:**
+
+- `fn new() -> Self` - 
+- `fn add(self: & mut Self, item: T)` - 
+- `fn len(self: &Self) -> usize` - 
+- `fn is_empty(self: &Self) -> bool` - 
+
+**Trait Implementations:**
+
+- **Default**
+  - `fn default() -> Self` - 
+
+
+
+## test_crate::types::DEFAULT_CAPACITY
+
+**Type:** Constant
+
+
+
+## test_crate::types::RefStruct
+
+**Type:** Struct
+
+**Generic Parameters:**
+- 'a
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `data` | `&'a str` | - |
+
+
+
+## test_crate::types::Status
+
+**Type:** Enum
+
+**Variants:**
+
+| Variant | Kind | Description |
+|---------|------|-------------|
+| `Idle` | Unit | - |
+| `Running` | Struct (1 fields) | - |
+| `Completed` | Unit | - |
+| `Failed` | Struct (1 fields) | - |
+
+
+
+## test_crate::types::StringMap
+
+**Type:** Type Alias
+
+
+
+---

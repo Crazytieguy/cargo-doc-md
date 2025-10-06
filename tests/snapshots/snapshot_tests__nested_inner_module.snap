@@ -1,0 +1,47 @@
+---
+source: tests/snapshot_tests.rs
+expression: inner_content
+---
+**test_crate > nested > inner**
+
+# Module: nested::inner
+
+## Contents
+
+**Modules**
+
+- [`deep`](#deep)
+
+**Structs**
+
+- [`InnerStruct`](#innerstruct)
+
+**Functions**
+
+- [`inner_function`](#inner_function)
+
+---
+
+## test_crate::nested::inner::InnerStruct
+
+**Type:** Struct
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `value` | `i32` | - |
+
+
+
+## Module: deep
+
+
+
+## test_crate::nested::inner::inner_function
+
+**Type:** Function
+
+```rust
+fn inner_function() -> &'static str
+```

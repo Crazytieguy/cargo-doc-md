@@ -80,6 +80,22 @@ Run `cargo doc-md --help` for detailed information.
 
 Requires Rust nightly.
 
+## Development
+
+This project uses snapshot testing to ensure output quality and consistency. Run tests with:
+
+```bash
+cargo test
+```
+
+When making changes to the output format, review snapshot changes with:
+
+```bash
+cargo insta review
+```
+
+See [tests/README.md](tests/README.md) for more information about the test suite.
+
 ## License
 
 MIT or Apache-2.0

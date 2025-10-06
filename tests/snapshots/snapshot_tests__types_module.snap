@@ -1,0 +1,95 @@
+---
+source: tests/snapshot_tests.rs
+expression: types_content
+---
+**test_crate > types**
+
+# Module: types
+
+## Contents
+
+**Structs**
+
+- [`Container`](#container)
+- [`RefStruct`](#refstruct)
+
+**Enums**
+
+- [`Status`](#status)
+
+**Constants**
+
+- [`DEFAULT_CAPACITY`](#default_capacity)
+
+**Type Aliases**
+
+- [`StringMap`](#stringmap)
+
+---
+
+## test_crate::types::Container
+
+**Type:** Struct
+
+**Generic Parameters:**
+- T
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `items` | `Vec<T>` | - |
+
+**Methods:**
+
+- `fn new() -> Self` - 
+- `fn add(self: & mut Self, item: T)` - 
+- `fn len(self: &Self) -> usize` - 
+- `fn is_empty(self: &Self) -> bool` - 
+
+**Trait Implementations:**
+
+- **Default**
+  - `fn default() -> Self` - 
+
+
+
+## test_crate::types::DEFAULT_CAPACITY
+
+**Type:** Constant
+
+
+
+## test_crate::types::RefStruct
+
+**Type:** Struct
+
+**Generic Parameters:**
+- 'a
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `data` | `&'a str` | - |
+
+
+
+## test_crate::types::Status
+
+**Type:** Enum
+
+**Variants:**
+
+| Variant | Kind | Description |
+|---------|------|-------------|
+| `Idle` | Unit | - |
+| `Running` | Struct (1 fields) | - |
+| `Completed` | Unit | - |
+| `Failed` | Struct (1 fields) | - |
+
+
+
+## test_crate::types::StringMap
+
+**Type:** Type Alias

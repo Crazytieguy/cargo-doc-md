@@ -1,0 +1,100 @@
+---
+source: tests/snapshot_tests.rs
+expression: functions_content
+---
+**test_crate > functions**
+
+# Module: functions
+
+## Contents
+
+**Functions**
+
+- [`add`](#add)
+- [`async_function`](#async_function)
+- [`const_function`](#const_function)
+- [`higher_order_function`](#higher_order_function)
+- [`multiply`](#multiply)
+- [`process_mut_slice`](#process_mut_slice)
+- [`process_slice`](#process_slice)
+- [`unsafe_function`](#unsafe_function)
+
+---
+
+## test_crate::functions::add
+
+**Type:** Function
+
+```rust
+fn add(a: i32, b: i32) -> i32
+```
+
+
+
+## test_crate::functions::async_function
+
+**Type:** Function
+
+```rust
+fn async_function(url: &str) -> Result<String, String>
+```
+
+
+
+## test_crate::functions::const_function
+
+**Type:** Function
+
+```rust
+fn const_function(x: i32) -> i32
+```
+
+
+
+## test_crate::functions::higher_order_function
+
+**Type:** Function
+
+```rust
+fn higher_order_function<F>(f: F) -> i32
+```
+
+
+
+## test_crate::functions::multiply
+
+**Type:** Function
+
+```rust
+fn multiply<T>(a: T, b: T) -> T
+```
+
+
+
+## test_crate::functions::process_mut_slice
+
+**Type:** Function
+
+```rust
+fn process_mut_slice(data: & mut [u8])
+```
+
+
+
+## test_crate::functions::process_slice
+
+**Type:** Function
+
+```rust
+fn process_slice(data: &[u8]) -> Vec<u8>
+```
+
+
+
+## test_crate::functions::unsafe_function
+
+**Type:** Function
+
+```rust
+fn unsafe_function(ptr: *const u8) -> u8
+```

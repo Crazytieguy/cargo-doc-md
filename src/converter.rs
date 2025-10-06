@@ -857,10 +857,11 @@ fn generate_crate_index(
         output.push_str(&format!("### [`{}`]({})\n\n", display_name, module_file));
 
         if !counts.is_empty() {
-            let summary: Vec<String> = counts
+            let mut summary: Vec<String> = counts
                 .iter()
                 .map(|(name, count)| format!("{} {}", count, name))
                 .collect();
+            summary.sort();
             output.push_str(&format!("*{}*\n\n", summary.join(", ")));
         }
     }

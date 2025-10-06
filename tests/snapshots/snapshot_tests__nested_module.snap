@@ -1,0 +1,33 @@
+---
+source: tests/snapshot_tests.rs
+expression: nested_content
+---
+**test_crate > nested**
+
+# Module: nested
+
+## Contents
+
+**Modules**
+
+- [`inner`](#inner)
+
+**Structs**
+
+- [`OuterStruct`](#outerstruct)
+
+---
+
+## test_crate::nested::OuterStruct
+
+**Type:** Struct
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `inner` | `inner::InnerStruct` | - |
+
+
+
+## Module: inner
