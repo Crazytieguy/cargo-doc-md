@@ -8,13 +8,17 @@ expression: deep_content
 
 ## Contents
 
+**Modules**
+
+- [`deeper`](#deeper) - Even deeper nesting.
+
 **Structs**
 
-- [`DeepStruct`](#deepstruct)
+- [`DeepStruct`](#deepstruct) - A struct in the deeply nested module.
 
 **Functions**
 
-- [`deep_function`](#deep_function)
+- [`deep_function`](#deep_function) - A function in the deeply nested module.
 
 ---
 
@@ -22,11 +26,19 @@ expression: deep_content
 
 **Type:** Struct
 
+A struct in the deeply nested module.
+
 **Fields:**
 
 | Name | Type | Description |
 |------|------|-------------|
 | `data` | `String` | - |
+
+**Methods:**
+
+- `fn new(data: String) -> Self` - Creates a new `DeepStruct`.
+- `fn len(self: &Self) -> usize` - Returns the length of the data.
+- `fn is_empty(self: &Self) -> bool` - Returns `true` if the data is empty.
 
 
 
@@ -34,6 +46,14 @@ expression: deep_content
 
 **Type:** Function
 
+A function in the deeply nested module.
+
 ```rust
 fn deep_function() -> i32
 ```
+
+
+
+## Module: deeper
+
+Even deeper nesting.

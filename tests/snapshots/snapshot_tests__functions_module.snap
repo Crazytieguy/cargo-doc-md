@@ -10,20 +10,34 @@ expression: functions_content
 
 **Functions**
 
-- [`add`](#add)
-- [`async_function`](#async_function)
-- [`const_function`](#const_function)
-- [`higher_order_function`](#higher_order_function)
-- [`multiply`](#multiply)
-- [`process_mut_slice`](#process_mut_slice)
-- [`process_slice`](#process_slice)
-- [`unsafe_function`](#unsafe_function)
+- [`add`](#add) - Adds two numbers together.
+- [`async_function`](#async_function) - An async function that simulates fetching data.
+- [`complex_generics`](#complex_generics) - A function that takes multiple generic parameters with different bounds.
+- [`const_function`](#const_function) - A const function that can be evaluated at compile time.
+- [`filter`](#filter) - Filters a slice based on a predicate.
+- [`for_each`](#for_each) - Applies a closure to each element in a slice.
+- [`higher_order_function`](#higher_order_function) - A higher-order function that applies a function to a value.
+- [`map`](#map) - Maps a slice to a new vector using a closure.
+- [`multiply`](#multiply) - Multiplies two values that implement `Mul`.
+- [`process_mut_slice`](#process_mut_slice) - Mutates a byte slice in place.
+- [`process_slice`](#process_slice) - Processes a byte slice and returns a new vector.
+- [`unsafe_function`](#unsafe_function) - An unsafe function that dereferences a raw pointer.
 
 ---
 
 ## test_crate::functions::add
 
 **Type:** Function
+
+Adds two numbers together.
+
+# Examples
+
+```
+use test_crate::functions::add;
+
+assert_eq!(add(2, 3), 5);
+```
 
 ```rust
 fn add(a: i32, b: i32) -> i32
@@ -35,8 +49,41 @@ fn add(a: i32, b: i32) -> i32
 
 **Type:** Function
 
+An async function that simulates fetching data.
+
+# Arguments
+
+* `url` - The URL to fetch from
+
+# Returns
+
+A `Result` containing the fetched string or an error message.
+
+# Examples
+
+```no_run
+# async fn example() {
+use test_crate::functions::async_function;
+
+let result = async_function("https://example.com").await;
+assert!(result.is_ok());
+# }
+```
+
 ```rust
 fn async_function(url: &str) -> Result<String, String>
+```
+
+
+
+## test_crate::functions::complex_generics
+
+**Type:** Function
+
+A function that takes multiple generic parameters with different bounds.
+
+```rust
+fn complex_generics<T, U, V>(t: T, u: U, _v: V) -> String
 ```
 
 
@@ -45,8 +92,48 @@ fn async_function(url: &str) -> Result<String, String>
 
 **Type:** Function
 
+A const function that can be evaluated at compile time.
+
+# Examples
+
+```
+use test_crate::functions::const_function;
+
+const VALUE: i32 = const_function(21);
+assert_eq!(VALUE, 42);
+```
+
 ```rust
 fn const_function(x: i32) -> i32
+```
+
+
+
+## test_crate::functions::filter
+
+**Type:** Function
+
+Filters a slice based on a predicate.
+
+```rust
+fn filter<T, F>(slice: &[T], predicate: F) -> Vec<&T>
+```
+
+
+
+## test_crate::functions::for_each
+
+**Type:** Function
+
+Applies a closure to each element in a slice.
+
+# Type Parameters
+
+* `T` - The type of elements in the slice
+* `F` - The closure type
+
+```rust
+fn for_each<T, F>(slice: &[T], f: F)
 ```
 
 
@@ -55,8 +142,30 @@ fn const_function(x: i32) -> i32
 
 **Type:** Function
 
+A higher-order function that applies a function to a value.
+
+# Arguments
+
+* `f` - A function that takes an `i32` and returns an `i32`
+
+# Returns
+
+The result of calling `f(42)`.
+
 ```rust
 fn higher_order_function<F>(f: F) -> i32
+```
+
+
+
+## test_crate::functions::map
+
+**Type:** Function
+
+Maps a slice to a new vector using a closure.
+
+```rust
+fn map<T, U, F>(slice: &[T], f: F) -> Vec<U>
 ```
 
 
@@ -64,6 +173,15 @@ fn higher_order_function<F>(f: F) -> i32
 ## test_crate::functions::multiply
 
 **Type:** Function
+
+Multiplies two values that implement `Mul`.
+
+This is a generic function that works with any type implementing
+the multiplication operator.
+
+# Type Parameters
+
+* `T` - A type that implements `Mul` and `Copy`
 
 ```rust
 fn multiply<T>(a: T, b: T) -> T
@@ -75,6 +193,14 @@ fn multiply<T>(a: T, b: T) -> T
 
 **Type:** Function
 
+Mutates a byte slice in place.
+
+Each byte is incremented by 1 (with wrapping).
+
+# Arguments
+
+* `data` - A mutable reference to the byte slice
+
 ```rust
 fn process_mut_slice(data: & mut [u8])
 ```
@@ -85,6 +211,16 @@ fn process_mut_slice(data: & mut [u8])
 
 **Type:** Function
 
+Processes a byte slice and returns a new vector.
+
+# Arguments
+
+* `data` - The input byte slice to process
+
+# Returns
+
+A new `Vec<u8>` containing a copy of the input data.
+
 ```rust
 fn process_slice(data: &[u8]) -> Vec<u8>
 ```
@@ -94,6 +230,16 @@ fn process_slice(data: &[u8]) -> Vec<u8>
 ## test_crate::functions::unsafe_function
 
 **Type:** Function
+
+An unsafe function that dereferences a raw pointer.
+
+# Safety
+
+The caller must ensure that `ptr` is valid and properly aligned.
+
+# Arguments
+
+* `ptr` - A raw pointer to a `u8`
 
 ```rust
 fn unsafe_function(ptr: *const u8) -> u8

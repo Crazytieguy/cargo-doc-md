@@ -4,15 +4,76 @@ expression: index_content
 ---
 # test_crate
 
+# Test Crate
+
+A comprehensive test crate demonstrating all Rust documentation features.
+
+This crate serves as a test fixture for `cargo-doc-md` and demonstrates:
+
+- **Structs**: Plain, tuple, unit, generic, with methods
+- **Enums**: Simple and complex variants
+- **Traits**: With associated types, constants, default implementations
+- **Functions**: Including async, generic, const, and unsafe
+- **Lifetimes**: Explicit lifetime parameters and bounds
+- **Patterns**: Builder, newtype, typestate, visitor
+- **Error handling**: Custom error types with `std::error::Error`
+- **Documentation**: Rich markdown with examples, links, and code blocks
+
+## Quick Start
+
+```rust
+use test_crate::{PlainStruct, Builder};
+
+let item = PlainStruct::new("example".to_string(), 42);
+assert_eq!(item.get_value(), 42);
+
+let built = Builder::new()
+    .name("test".to_string())
+    .value(100)
+    .build()
+    .unwrap();
+```
+
+## Module Organization
+
+- [`types`] - Type definitions including containers and enums
+- [`functions`] - Various function signatures and examples
+- [`traits`] - Advanced trait definitions with associated types
+- [`lifetimes`] - Lifetime parameter examples
+- [`patterns`] - Common Rust design patterns
+- [`async_example`] - Async/await functionality
+- [`errors`] - Error handling patterns
+- [`nested`] - Nested module hierarchy example
+
+## Feature Flags
+
+This crate has no feature flags but demonstrates documentation of them.
+
+## Safety
+
+This crate contains `unsafe` code examples for documentation purposes only.
+
 ## Modules
 
 ### [`test_crate`](test_crate.md)
 
-*1 constants, 1 traits, 1 type aliases, 3 enums, 3 modules, 4 functions, 5 structs*
+*2 traits, 2 type aliases, 3 constants, 3 enums, 6 structs, 7 functions, 8 modules*
+
+### [`async_example`](async_example.md)
+
+*2 structs, 2 traits, 5 functions*
+
+### [`errors`](errors.md)
+
+*1 enums, 1 structs, 1 traits, 1 type aliases, 3 functions*
 
 ### [`functions`](functions.md)
 
-*8 functions*
+*12 functions*
+
+### [`lifetimes`](lifetimes.md)
+
+*1 enums, 1 traits, 3 functions, 4 structs*
 
 ### [`nested`](nested.md)
 
@@ -24,8 +85,24 @@ expression: index_content
 
 ### [`nested::inner::deep`](nested/inner/deep.md)
 
-*1 functions, 1 structs*
+*1 functions, 1 modules, 1 structs*
+
+### [`nested::inner::deep::deeper`](nested/inner/deep/deeper.md)
+
+*1 structs*
+
+### [`patterns`](patterns.md)
+
+*8 structs*
+
+### [`traits`](traits.md)
+
+*11 traits, 2 structs*
+
+### [`traits::private`](traits/private.md)
+
+*1 traits*
 
 ### [`types`](types.md)
 
-*1 constants, 1 enums, 1 type aliases, 2 structs*
+*1 enums, 2 constants, 2 type aliases, 3 structs*

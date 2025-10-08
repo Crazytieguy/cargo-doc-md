@@ -10,12 +10,18 @@ expression: lib_content
 
 **Modules**
 
-- [`functions`](#functions)
-- [`nested`](#nested)
-- [`types`](#types)
+- [`async_example`](#async_example)
+- [`errors`](#errors)
+- [`functions`](#functions) - Function examples demonstrating various signatures and patterns.
+- [`lifetimes`](#lifetimes)
+- [`nested`](#nested) - Demonstrates nested module hierarchies.
+- [`patterns`](#patterns)
+- [`traits`](#traits)
+- [`types`](#types) - Type definitions and containers.
 
 **Structs**
 
+- [`BoundedGeneric`](#boundedgeneric)
 - [`Error`](#error)
 - [`GenericStruct`](#genericstruct)
 - [`PlainStruct`](#plainstruct)
@@ -30,24 +36,51 @@ expression: lib_content
 
 **Functions**
 
+- [`const_function`](#const_function)
 - [`function_with_args`](#function_with_args)
 - [`function_with_result`](#function_with_result)
 - [`generic_function`](#generic_function)
+- [`multiple_bounds`](#multiple_bounds)
 - [`simple_function`](#simple_function)
+- [`unsafe_function`](#unsafe_function) - An unsafe function that dereferences a raw pointer.
 
 **Traits**
 
+- [`DisplayDebug`](#displaydebug)
 - [`MyTrait`](#mytrait)
 
 **Constants**
 
 - [`MAX_SIZE`](#max_size)
+- [`MIN_SIZE`](#min_size)
+- [`VERSION`](#version)
 
 **Type Aliases**
 
+- [`GenericResult`](#genericresult)
 - [`Result`](#result)
 
 ---
+
+## test_crate::BoundedGeneric
+
+**Type:** Struct
+
+**Generic Parameters:**
+- T
+
+**Fields:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `data` | `T` | - |
+
+**Methods:**
+
+- `fn new(data: T) -> Self` - 
+- `fn clone_data(self: &Self) -> T` - 
+
+
 
 ## test_crate::ComplexEnum
 
@@ -61,14 +94,37 @@ expression: lib_content
 | `Tuple` | Tuple(String, i32) | - |
 | `Struct` | Struct (2 fields) | - |
 
+**Methods:**
+
+- `fn name(self: &Self) -> Option<&str>` - 
+
+
+
+## test_crate::DisplayDebug
+
+**Type:** Trait
+
+**Methods:**
+
+- `format_both`
+
 
 
 ## test_crate::Error
 
 **Type:** Struct
 
+**Methods:**
+
+- `fn new<impl Into<String>>(message: impl Trait) -> Self` - 
+- `fn message(self: &Self) -> &str` - 
+
+**Implemented Traits:** Error
+
 **Trait Implementations:**
 
+- **Display**
+  - `fn fmt(self: &Self, f: & mut fmt::Formatter) -> fmt::Result` - 
 - **Debug**
   - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
 
@@ -80,13 +136,34 @@ expression: lib_content
 
 **Generic Parameters:**
 - T
+- E
 
 **Variants:**
 
 | Variant | Kind | Description |
 |---------|------|-------------|
-| `Some` | Tuple(T) | - |
+| `Ok` | Tuple(T) | - |
+| `Err` | Tuple(E) | - |
 | `None` | Unit | - |
+
+**Methods:**
+
+- `fn is_ok(self: &Self) -> bool` - 
+- `fn is_err(self: &Self) -> bool` - 
+- `fn ok(self: Self) -> Option<T>` - 
+
+**Trait Implementations:**
+
+- **Debug**
+  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+- **Clone**
+  - `fn clone(self: &Self) -> GenericEnum<T, E>` - 
+
+
+
+## test_crate::GenericResult
+
+**Type:** Type Alias
 
 
 
@@ -109,10 +186,25 @@ expression: lib_content
 
 - `fn new(first: T, second: U) -> Self` - 
 - `fn swap(self: Self) -> GenericStruct<U, T>` - 
+- `fn map_first<F, R>(self: Self, f: F) -> GenericStruct<R, U>` - 
+- `fn duplicate(self: &Self) -> (T, U)` - 
+
+**Trait Implementations:**
+
+- **Debug**
+  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+- **Clone**
+  - `fn clone(self: &Self) -> GenericStruct<T, U>` - 
 
 
 
 ## test_crate::MAX_SIZE
+
+**Type:** Constant
+
+
+
+## test_crate::MIN_SIZE
 
 **Type:** Constant
 
@@ -126,6 +218,7 @@ expression: lib_content
 
 - `required_method`
 - `provided_method`
+- `another_provided`
 
 
 
@@ -143,16 +236,25 @@ expression: lib_content
 **Methods:**
 
 - `fn new(name: String, value: i32) -> Self` - 
+- `fn with_private(name: String, value: i32, private_field: bool) -> Self` - 
 - `fn get_value(self: &Self) -> i32` - 
+- `fn set_value(self: & mut Self, value: i32)` - 
+
+**Implemented Traits:** Eq, StructuralPartialEq
 
 **Trait Implementations:**
 
-- **MyTrait**
-  - `fn required_method(self: &Self) -> String` - 
 - **Clone**
   - `fn clone(self: &Self) -> PlainStruct` - 
+- **PartialEq**
+  - `fn eq(self: &Self, other: &PlainStruct) -> bool` - 
+- **Default**
+  - `fn default() -> Self` - 
 - **Debug**
   - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+- **MyTrait**
+  - `fn required_method(self: &Self) -> String` - 
+  - `fn provided_method(self: &Self) -> i32` - 
 
 
 
@@ -174,16 +276,21 @@ expression: lib_content
 | `VariantB` | Unit | - |
 | `VariantC` | Unit | - |
 
-**Implemented Traits:** Eq, StructuralPartialEq
+**Methods:**
+
+- `fn default_variant() -> Self` - 
+- `fn is_variant_a(self: &Self) -> bool` - 
+
+**Implemented Traits:** StructuralPartialEq, Eq
 
 **Trait Implementations:**
 
 - **PartialEq**
   - `fn eq(self: &Self, other: &SimpleEnum) -> bool` - 
-- **Clone**
-  - `fn clone(self: &Self) -> SimpleEnum` - 
 - **Debug**
   - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+- **Clone**
+  - `fn clone(self: &Self) -> SimpleEnum` - 
 
 
 
@@ -200,6 +307,30 @@ expression: lib_content
 **Type:** Struct
 
 **Unit Struct**
+
+
+
+## test_crate::VERSION
+
+**Type:** Constant
+
+
+
+## Module: async_example
+
+
+
+## test_crate::const_function
+
+**Type:** Function
+
+```rust
+fn const_function(x: i32) -> i32
+```
+
+
+
+## Module: errors
 
 
 
@@ -225,6 +356,16 @@ fn function_with_result(value: i32) -> Result<String>
 
 ## Module: functions
 
+Function examples demonstrating various signatures and patterns.
+
+This module shows:
+- Simple functions
+- Generic functions with trait bounds
+- Async functions
+- Unsafe functions
+- Const functions
+- Higher-order functions
+
 
 
 ## test_crate::generic_function
@@ -237,7 +378,29 @@ fn generic_function<T>(item: T) -> String
 
 
 
+## Module: lifetimes
+
+
+
+## test_crate::multiple_bounds
+
+**Type:** Function
+
+```rust
+fn multiple_bounds<T>(item: T) -> String
+```
+
+
+
 ## Module: nested
+
+Demonstrates nested module hierarchies.
+
+This shows how documentation is structured for deeply nested modules.
+
+
+
+## Module: patterns
 
 
 
@@ -251,4 +414,33 @@ fn simple_function()
 
 
 
+## Module: traits
+
+
+
 ## Module: types
+
+Type definitions and containers.
+
+This module demonstrates various type definitions including:
+- Generic containers
+- Enums with multiple variants
+- Type aliases
+- Structs with lifetime parameters
+
+
+
+## test_crate::unsafe_function
+
+**Type:** Function
+
+An unsafe function that dereferences a raw pointer.
+
+# Safety
+
+The caller must ensure that `ptr` is valid, properly aligned,
+and points to initialized memory.
+
+```rust
+fn unsafe_function(ptr: *const u8) -> u8
+```

@@ -3,11 +3,18 @@ source: tests/snapshot_tests.rs
 expression: file_paths
 ---
 [
+    "async_example.md",
+    "errors.md",
     "functions.md",
     "index.md",
+    "lifetimes.md",
     "nested.md",
     "nested/inner.md",
     "nested/inner/deep.md",
+    "nested/inner/deep/deeper.md",
+    "patterns.md",
     "test_crate.md",
+    "traits.md",
+    "traits/private.md",
     "types.md",
 ]
