@@ -152,7 +152,7 @@ fn test_trait_formatting() {
     let lib_content = output.files.get("test_crate.md").expect("lib module not found");
 
     assert!(lib_content.contains("## test_crate::MyTrait"));
-    assert!(lib_content.contains("**Type:** Trait"));
+    assert!(lib_content.contains("*Trait*"));
 }
 
 #[test]

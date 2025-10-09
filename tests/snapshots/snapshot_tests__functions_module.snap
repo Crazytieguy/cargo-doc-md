@@ -27,7 +27,7 @@ expression: functions_content
 
 ## test_crate::functions::add
 
-**Type:** Function
+*Function*
 
 Adds two numbers together.
 
@@ -47,7 +47,7 @@ fn add(a: i32, b: i32) -> i32
 
 ## test_crate::functions::async_function
 
-**Type:** Function
+*Function*
 
 An async function that simulates fetching data.
 
@@ -78,7 +78,7 @@ fn async_function(url: &str) -> Result<String, String>
 
 ## test_crate::functions::complex_generics
 
-**Type:** Function
+*Function*
 
 A function that takes multiple generic parameters with different bounds.
 
@@ -90,7 +90,7 @@ fn complex_generics<T, U, V>(t: T, u: U, _v: V) -> String
 
 ## test_crate::functions::const_function
 
-**Type:** Function
+*Function*
 
 A const function that can be evaluated at compile time.
 
@@ -111,7 +111,7 @@ fn const_function(x: i32) -> i32
 
 ## test_crate::functions::filter
 
-**Type:** Function
+*Function*
 
 Filters a slice based on a predicate.
 
@@ -123,7 +123,7 @@ fn filter<T, F>(slice: &[T], predicate: F) -> Vec<&T>
 
 ## test_crate::functions::for_each
 
-**Type:** Function
+*Function*
 
 Applies a closure to each element in a slice.
 
@@ -140,7 +140,7 @@ fn for_each<T, F>(slice: &[T], f: F)
 
 ## test_crate::functions::higher_order_function
 
-**Type:** Function
+*Function*
 
 A higher-order function that applies a function to a value.
 
@@ -160,7 +160,7 @@ fn higher_order_function<F>(f: F) -> i32
 
 ## test_crate::functions::map
 
-**Type:** Function
+*Function*
 
 Maps a slice to a new vector using a closure.
 
@@ -172,7 +172,7 @@ fn map<T, U, F>(slice: &[T], f: F) -> Vec<U>
 
 ## test_crate::functions::multiply
 
-**Type:** Function
+*Function*
 
 Multiplies two values that implement `Mul`.
 
@@ -191,7 +191,7 @@ fn multiply<T>(a: T, b: T) -> T
 
 ## test_crate::functions::process_mut_slice
 
-**Type:** Function
+*Function*
 
 Mutates a byte slice in place.
 
@@ -209,7 +209,7 @@ fn process_mut_slice(data: & mut [u8])
 
 ## test_crate::functions::process_slice
 
-**Type:** Function
+*Function*
 
 Processes a byte slice and returns a new vector.
 
@@ -229,7 +229,7 @@ fn process_slice(data: &[u8]) -> Vec<u8>
 
 ## test_crate::functions::unsafe_function
 
-**Type:** Function
+*Function*
 
 An unsafe function that dereferences a raw pointer.
 

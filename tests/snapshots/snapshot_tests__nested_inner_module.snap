@@ -24,15 +24,12 @@ expression: inner_content
 
 ## test_crate::nested::inner::InnerStruct
 
-**Type:** Struct
+*Struct*
 
 A struct defined in the inner module.
 
 **Fields:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `value` | `i32` | - |
+- `value: i32`
 
 **Methods:**
 
@@ -49,7 +46,7 @@ Deeply nested module.
 
 ## test_crate::nested::inner::inner_function
 
-**Type:** Function
+*Function*
 
 A function in the inner module.
 

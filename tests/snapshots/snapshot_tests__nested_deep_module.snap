@@ -24,15 +24,12 @@ expression: deep_content
 
 ## test_crate::nested::inner::deep::DeepStruct
 
-**Type:** Struct
+*Struct*
 
 A struct in the deeply nested module.
 
 **Fields:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `data` | `String` | - |
+- `data: String`
 
 **Methods:**
 
@@ -44,7 +41,7 @@ A struct in the deeply nested module.
 
 ## test_crate::nested::inner::deep::deep_function
 
-**Type:** Function
+*Function*
 
 A function in the deeply nested module.
 

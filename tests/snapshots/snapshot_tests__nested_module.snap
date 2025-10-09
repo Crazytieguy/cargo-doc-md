@@ -20,15 +20,12 @@ expression: nested_content
 
 ## test_crate::nested::OuterStruct
 
-**Type:** Struct
+*Struct*
 
 An outer struct that contains an inner struct.
 
 **Fields:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `inner` | `inner::InnerStruct` | - |
+- `inner: inner::InnerStruct`
 
 **Methods:**
 

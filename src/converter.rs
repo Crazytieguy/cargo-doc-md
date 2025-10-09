@@ -251,7 +251,7 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
     match &item.inner {
         ItemEnum::Struct(s) => {
             output.push_str(&format!("## {}\n\n", name));
-            output.push_str("**Type:** Struct\n\n");
+            output.push_str("*Struct*\n\n");
 
             if let Some(docs) = &item.docs {
                 output.push_str(&format!("{}\n\n", docs));
@@ -278,9 +278,7 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
             match &s.kind {
                 rustdoc_types::StructKind::Plain { fields, .. } => {
                     if !fields.is_empty() {
-                        output.push_str("**Fields:**\n\n");
-                        output.push_str("| Name | Type | Description |\n");
-                        output.push_str("|------|------|-------------|\n");
+                        output.push_str("**Fields:**\n");
                         for field_id in fields {
                             if let Some(field) = crate_data.index.get(field_id) {
                                 if let Some(field_name) = &field.name {
@@ -290,20 +288,14 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
                                     } else {
                                         "?".to_string()
                                     };
-                                    let field_doc = if let Some(docs) = &field.docs {
+                                    output.push_str(&format!("- `{}: {}`", field_name, field_type));
+                                    if let Some(docs) = &field.docs {
                                         let first_line = docs.lines().next().unwrap_or("").trim();
-                                        if first_line.is_empty() {
-                                            "-".to_string()
-                                        } else {
-                                            first_line.to_string()
+                                        if !first_line.is_empty() {
+                                            output.push_str(&format!(" - {}", first_line));
                                         }
-                                    } else {
-                                        "-".to_string()
-                                    };
-                                    output.push_str(&format!(
-                                        "| `{}` | `{}` | {} |\n",
-                                        field_name, field_type, field_doc
-                                    ));
+                                    }
+                                    output.push('\n');
                                 }
                             }
                         }
@@ -311,9 +303,23 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
                     }
                 }
                 rustdoc_types::StructKind::Tuple(fields) => {
+                    let types: Vec<String> = fields
+                        .iter()
+                        .filter_map(|field_id| {
+                            field_id.and_then(|id| {
+                                crate_data.index.get(&id).map(|field| {
+                                    if let ItemEnum::StructField(ty) = &field.inner {
+                                        format_type(ty)
+                                    } else {
+                                        "?".to_string()
+                                    }
+                                })
+                            })
+                        })
+                        .collect();
                     output.push_str(&format!(
-                        "**Tuple Struct** with {} field(s)\n\n",
-                        fields.len()
+                        "**Tuple Struct**: `({})`\n\n",
+                        types.join(", ")
                     ));
                 }
                 rustdoc_types::StructKind::Unit => {
@@ -354,9 +360,14 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
                         }
                     }
 
-                    if !derives.is_empty() {
-                        output.push_str("**Implemented Traits:** ");
-                        output.push_str(&derives.join(", "));
+                    let public_derives: Vec<_> = derives
+                        .into_iter()
+                        .filter(|t| !is_compiler_internal_trait(t))
+                        .collect();
+
+                    if !public_derives.is_empty() {
+                        output.push_str("**Traits:** ");
+                        output.push_str(&public_derives.join(", "));
                         output.push_str("\n\n");
                     }
 
@@ -375,7 +386,7 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
         }
         ItemEnum::Enum(e) => {
             output.push_str(&format!("## {}\n\n", name));
-            output.push_str("**Type:** Enum\n\n");
+            output.push_str("*Enum*\n\n");
 
             if let Some(docs) = &item.docs {
                 output.push_str(&format!("{}\n\n", docs));
@@ -400,15 +411,13 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
             }
 
             if !e.variants.is_empty() {
-                output.push_str("**Variants:**\n\n");
-                output.push_str("| Variant | Kind | Description |\n");
-                output.push_str("|---------|------|-------------|\n");
+                output.push_str("**Variants:**\n");
                 for variant_id in &e.variants {
                     if let Some(variant) = crate_data.index.get(variant_id) {
                         if let Some(variant_name) = &variant.name {
                             let variant_kind = if let ItemEnum::Variant(v) = &variant.inner {
                                 match &v.kind {
-                                    rustdoc_types::VariantKind::Plain => "Unit".to_string(),
+                                    rustdoc_types::VariantKind::Plain => None,
                                     rustdoc_types::VariantKind::Tuple(fields) => {
                                         let types: Vec<_> = fields
                                             .iter()
@@ -427,29 +436,45 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
                                                 "?".to_string()
                                             })
                                             .collect();
-                                        format!("Tuple({})", types.join(", "))
+                                        Some(format!("({})", types.join(", ")))
                                     }
                                     rustdoc_types::VariantKind::Struct { fields, .. } => {
-                                        format!("Struct ({} fields)", fields.len())
+                                        let field_list: Vec<String> = fields
+                                            .iter()
+                                            .filter_map(|field_id| {
+                                                crate_data.index.get(field_id).and_then(|f| {
+                                                    f.name.as_ref().map(|name| {
+                                                        let field_type = if let ItemEnum::StructField(ty) = &f.inner {
+                                                            format_type(ty)
+                                                        } else {
+                                                            "?".to_string()
+                                                        };
+                                                        format!("{}: {}", name, field_type)
+                                                    })
+                                                })
+                                            })
+                                            .collect();
+                                        Some(format!("{{ {} }}", field_list.join(", ")))
                                     }
                                 }
                             } else {
-                                "?".to_string()
+                                None
                             };
-                            let variant_doc = if let Some(docs) = &variant.docs {
+
+                            output.push_str("- `");
+                            output.push_str(variant_name);
+                            if let Some(kind) = variant_kind {
+                                output.push_str(&kind);
+                            }
+                            output.push('`');
+
+                            if let Some(docs) = &variant.docs {
                                 let first_line = docs.lines().next().unwrap_or("").trim();
-                                if first_line.is_empty() {
-                                    "-".to_string()
-                                } else {
-                                    first_line.to_string()
+                                if !first_line.is_empty() {
+                                    output.push_str(&format!(" - {}", first_line));
                                 }
-                            } else {
-                                "-".to_string()
-                            };
-                            output.push_str(&format!(
-                                "| `{}` | {} | {} |\n",
-                                variant_name, variant_kind, variant_doc
-                            ));
+                            }
+                            output.push('\n');
                         }
                     }
                 }
@@ -489,9 +514,14 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
                         }
                     }
 
-                    if !derives.is_empty() {
-                        output.push_str("**Implemented Traits:** ");
-                        output.push_str(&derives.join(", "));
+                    let public_derives: Vec<_> = derives
+                        .into_iter()
+                        .filter(|t| !is_compiler_internal_trait(t))
+                        .collect();
+
+                    if !public_derives.is_empty() {
+                        output.push_str("**Traits:** ");
+                        output.push_str(&public_derives.join(", "));
                         output.push_str("\n\n");
                     }
 
@@ -510,7 +540,7 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
         }
         ItemEnum::Function(f) => {
             output.push_str(&format!("## {}\n\n", name));
-            output.push_str("**Type:** Function\n\n");
+            output.push_str("*Function*\n\n");
 
             if let Some(docs) = &item.docs {
                 output.push_str(&format!("{}\n\n", docs));
@@ -545,7 +575,7 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
         }
         ItemEnum::Trait(t) => {
             output.push_str(&format!("## {}\n\n", name));
-            output.push_str("**Type:** Trait\n\n");
+            output.push_str("*Trait*\n\n");
 
             if let Some(docs) = &item.docs {
                 output.push_str(&format!("{}\n\n", docs));
@@ -579,15 +609,15 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
         }
         ItemEnum::Constant { .. } => {
             output.push_str(&format!("## {}\n\n", name));
-            output.push_str("**Type:** Constant\n\n");
+            output.push_str("*Constant*\n\n");
 
             if let Some(docs) = &item.docs {
                 output.push_str(&format!("{}\n\n", docs));
             }
         }
-        ItemEnum::TypeAlias(_) => {
+        ItemEnum::TypeAlias(ta) => {
             output.push_str(&format!("## {}\n\n", name));
-            output.push_str("**Type:** Type Alias\n\n");
+            output.push_str(&format!("*Type Alias*: `{}`\n\n", format_type(&ta.type_)));
 
             if let Some(docs) = &item.docs {
                 output.push_str(&format!("{}\n\n", docs));
@@ -620,6 +650,18 @@ fn is_synthetic_lifetime(name: &str) -> bool {
         || name.starts_with("'_") && name[2..].chars().all(|c| c.is_ascii_digit())
         || name.starts_with("'life") && name[5..].chars().all(|c| c.is_ascii_digit())
         || name == "'async_trait"
+}
+
+fn is_compiler_internal_trait(trait_name: &str) -> bool {
+    matches!(
+        trait_name,
+        "StructuralPartialEq"
+            | "StructuralEq"
+            | "Freeze"
+            | "Unpin"
+            | "RefUnwindSafe"
+            | "UnwindSafe"
+    )
 }
 
 fn collect_impls_for_type<'a>(
@@ -659,12 +701,15 @@ fn format_impl_methods(impl_block: &rustdoc_types::Impl, crate_data: &Crate) -> 
             if let ItemEnum::Function(f) = &method.inner {
                 if let Some(method_name) = &method.name {
                     let sig = format_function_signature(method_name, f);
-                    let doc = if let Some(docs) = &method.docs {
-                        docs.lines().next().unwrap_or("")
-                    } else {
-                        ""
-                    };
-                    output.push_str(&format!("- `{}` - {}\n", sig, doc));
+                    output.push_str(&format!("- `{}`", sig));
+
+                    if let Some(docs) = &method.docs {
+                        let first_line = docs.lines().next().unwrap_or("").trim();
+                        if !first_line.is_empty() {
+                            output.push_str(&format!(" - {}", first_line));
+                        }
+                    }
+                    output.push('\n');
                 }
             }
         }

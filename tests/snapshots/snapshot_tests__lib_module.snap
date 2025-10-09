@@ -64,45 +64,39 @@ expression: lib_content
 
 ## test_crate::BoundedGeneric
 
-**Type:** Struct
+*Struct*
 
 **Generic Parameters:**
 - T
 
 **Fields:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `data` | `T` | - |
+- `data: T`
 
 **Methods:**
 
-- `fn new(data: T) -> Self` - 
-- `fn clone_data(self: &Self) -> T` - 
+- `fn new(data: T) -> Self`
+- `fn clone_data(self: &Self) -> T`
 
 
 
 ## test_crate::ComplexEnum
 
-**Type:** Enum
+*Enum*
 
 **Variants:**
-
-| Variant | Kind | Description |
-|---------|------|-------------|
-| `Unit` | Unit | - |
-| `Tuple` | Tuple(String, i32) | - |
-| `Struct` | Struct (2 fields) | - |
+- `Unit`
+- `Tuple(String, i32)`
+- `Struct{ name: String, age: u32 }`
 
 **Methods:**
 
-- `fn name(self: &Self) -> Option<&str>` - 
+- `fn name(self: &Self) -> Option<&str>`
 
 
 
 ## test_crate::DisplayDebug
 
-**Type:** Trait
+*Trait*
 
 **Methods:**
 
@@ -112,107 +106,101 @@ expression: lib_content
 
 ## test_crate::Error
 
-**Type:** Struct
+*Struct*
 
 **Methods:**
 
-- `fn new<impl Into<String>>(message: impl Trait) -> Self` - 
-- `fn message(self: &Self) -> &str` - 
+- `fn new<impl Into<String>>(message: impl Trait) -> Self`
+- `fn message(self: &Self) -> &str`
 
-**Implemented Traits:** Error
+**Traits:** Error
 
 **Trait Implementations:**
 
 - **Display**
-  - `fn fmt(self: &Self, f: & mut fmt::Formatter) -> fmt::Result` - 
+  - `fn fmt(self: &Self, f: & mut fmt::Formatter) -> fmt::Result`
 - **Debug**
-  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result`
 
 
 
 ## test_crate::GenericEnum
 
-**Type:** Enum
+*Enum*
 
 **Generic Parameters:**
 - T
 - E
 
 **Variants:**
-
-| Variant | Kind | Description |
-|---------|------|-------------|
-| `Ok` | Tuple(T) | - |
-| `Err` | Tuple(E) | - |
-| `None` | Unit | - |
+- `Ok(T)`
+- `Err(E)`
+- `None`
 
 **Methods:**
 
-- `fn is_ok(self: &Self) -> bool` - 
-- `fn is_err(self: &Self) -> bool` - 
-- `fn ok(self: Self) -> Option<T>` - 
+- `fn is_ok(self: &Self) -> bool`
+- `fn is_err(self: &Self) -> bool`
+- `fn ok(self: Self) -> Option<T>`
 
 **Trait Implementations:**
 
 - **Debug**
-  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result`
 - **Clone**
-  - `fn clone(self: &Self) -> GenericEnum<T, E>` - 
+  - `fn clone(self: &Self) -> GenericEnum<T, E>`
 
 
 
 ## test_crate::GenericResult
 
-**Type:** Type Alias
+*Type Alias*: `std::result::Result<T, E>`
 
 
 
 ## test_crate::GenericStruct
 
-**Type:** Struct
+*Struct*
 
 **Generic Parameters:**
 - T
 - U
 
 **Fields:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `first` | `T` | - |
-| `second` | `U` | - |
+- `first: T`
+- `second: U`
 
 **Methods:**
 
-- `fn new(first: T, second: U) -> Self` - 
-- `fn swap(self: Self) -> GenericStruct<U, T>` - 
-- `fn map_first<F, R>(self: Self, f: F) -> GenericStruct<R, U>` - 
-- `fn duplicate(self: &Self) -> (T, U)` - 
+- `fn new(first: T, second: U) -> Self`
+- `fn swap(self: Self) -> GenericStruct<U, T>`
+- `fn map_first<F, R>(self: Self, f: F) -> GenericStruct<R, U>`
+- `fn duplicate(self: &Self) -> (T, U)`
 
 **Trait Implementations:**
 
 - **Debug**
-  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result`
 - **Clone**
-  - `fn clone(self: &Self) -> GenericStruct<T, U>` - 
+  - `fn clone(self: &Self) -> GenericStruct<T, U>`
 
 
 
 ## test_crate::MAX_SIZE
 
-**Type:** Constant
+*Constant*
 
 
 
 ## test_crate::MIN_SIZE
 
-**Type:** Constant
+*Constant*
 
 
 
 ## test_crate::MyTrait
 
-**Type:** Trait
+*Trait*
 
 **Methods:**
 
@@ -224,87 +212,81 @@ expression: lib_content
 
 ## test_crate::PlainStruct
 
-**Type:** Struct
+*Struct*
 
 **Fields:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `name` | `String` | - |
-| `value` | `i32` | - |
+- `name: String`
+- `value: i32`
 
 **Methods:**
 
-- `fn new(name: String, value: i32) -> Self` - 
-- `fn with_private(name: String, value: i32, private_field: bool) -> Self` - 
-- `fn get_value(self: &Self) -> i32` - 
-- `fn set_value(self: & mut Self, value: i32)` - 
+- `fn new(name: String, value: i32) -> Self`
+- `fn with_private(name: String, value: i32, private_field: bool) -> Self`
+- `fn get_value(self: &Self) -> i32`
+- `fn set_value(self: & mut Self, value: i32)`
 
-**Implemented Traits:** Eq, StructuralPartialEq
+**Traits:** Eq
 
 **Trait Implementations:**
 
 - **Clone**
-  - `fn clone(self: &Self) -> PlainStruct` - 
+  - `fn clone(self: &Self) -> PlainStruct`
 - **PartialEq**
-  - `fn eq(self: &Self, other: &PlainStruct) -> bool` - 
+  - `fn eq(self: &Self, other: &PlainStruct) -> bool`
 - **Default**
-  - `fn default() -> Self` - 
+  - `fn default() -> Self`
 - **Debug**
-  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result`
 - **MyTrait**
-  - `fn required_method(self: &Self) -> String` - 
-  - `fn provided_method(self: &Self) -> i32` - 
+  - `fn required_method(self: &Self) -> String`
+  - `fn provided_method(self: &Self) -> i32`
 
 
 
 ## test_crate::Result
 
-**Type:** Type Alias
+*Type Alias*: `std::result::Result<T, Error>`
 
 
 
 ## test_crate::SimpleEnum
 
-**Type:** Enum
+*Enum*
 
 **Variants:**
-
-| Variant | Kind | Description |
-|---------|------|-------------|
-| `VariantA` | Unit | - |
-| `VariantB` | Unit | - |
-| `VariantC` | Unit | - |
+- `VariantA`
+- `VariantB`
+- `VariantC`
 
 **Methods:**
 
-- `fn default_variant() -> Self` - 
-- `fn is_variant_a(self: &Self) -> bool` - 
+- `fn default_variant() -> Self`
+- `fn is_variant_a(self: &Self) -> bool`
 
-**Implemented Traits:** StructuralPartialEq, Eq
+**Traits:** Eq
 
 **Trait Implementations:**
 
 - **PartialEq**
-  - `fn eq(self: &Self, other: &SimpleEnum) -> bool` - 
+  - `fn eq(self: &Self, other: &SimpleEnum) -> bool`
 - **Debug**
-  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result`
 - **Clone**
-  - `fn clone(self: &Self) -> SimpleEnum` - 
+  - `fn clone(self: &Self) -> SimpleEnum`
 
 
 
 ## test_crate::TupleStruct
 
-**Type:** Struct
+*Struct*
 
-**Tuple Struct** with 2 field(s)
+**Tuple Struct**: `(String, i32)`
 
 
 
 ## test_crate::UnitStruct
 
-**Type:** Struct
+*Struct*
 
 **Unit Struct**
 
@@ -312,7 +294,7 @@ expression: lib_content
 
 ## test_crate::VERSION
 
-**Type:** Constant
+*Constant*
 
 
 
@@ -322,7 +304,7 @@ expression: lib_content
 
 ## test_crate::const_function
 
-**Type:** Function
+*Function*
 
 ```rust
 fn const_function(x: i32) -> i32
@@ -336,7 +318,7 @@ fn const_function(x: i32) -> i32
 
 ## test_crate::function_with_args
 
-**Type:** Function
+*Function*
 
 ```rust
 fn function_with_args(name: &str, value: i32) -> String
@@ -346,7 +328,7 @@ fn function_with_args(name: &str, value: i32) -> String
 
 ## test_crate::function_with_result
 
-**Type:** Function
+*Function*
 
 ```rust
 fn function_with_result(value: i32) -> Result<String>
@@ -370,7 +352,7 @@ This module shows:
 
 ## test_crate::generic_function
 
-**Type:** Function
+*Function*
 
 ```rust
 fn generic_function<T>(item: T) -> String
@@ -384,7 +366,7 @@ fn generic_function<T>(item: T) -> String
 
 ## test_crate::multiple_bounds
 
-**Type:** Function
+*Function*
 
 ```rust
 fn multiple_bounds<T>(item: T) -> String
@@ -406,7 +388,7 @@ This shows how documentation is structured for deeply nested modules.
 
 ## test_crate::simple_function
 
-**Type:** Function
+*Function*
 
 ```rust
 fn simple_function()
@@ -432,7 +414,7 @@ This module demonstrates various type definitions including:
 
 ## test_crate::unsafe_function
 
-**Type:** Function
+*Function*
 
 An unsafe function that dereferences a raw pointer.
 

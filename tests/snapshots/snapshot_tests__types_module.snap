@@ -32,7 +32,7 @@ expression: types_content
 
 ## test_crate::types::Container
 
-**Type:** Struct
+*Struct*
 
 A generic container for items of type `T`.
 
@@ -50,10 +50,7 @@ assert_eq!(container.len(), 1);
 - T
 
 **Fields:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `items` | `Vec<T>` | - |
+- `items: Vec<T>`
 
 **Methods:**
 
@@ -66,15 +63,15 @@ assert_eq!(container.len(), 1);
 **Trait Implementations:**
 
 - **FromIterator**
-  - `fn from_iter<I>(iter: I) -> Self` - 
+  - `fn from_iter<I>(iter: I) -> Self`
 - **Default**
-  - `fn default() -> Self` - 
+  - `fn default() -> Self`
 
 
 
 ## test_crate::types::DEFAULT_CAPACITY
 
-**Type:** Constant
+*Constant*
 
 The default capacity for containers.
 
@@ -82,7 +79,7 @@ The default capacity for containers.
 
 ## test_crate::types::MAX_RETRIES
 
-**Type:** Constant
+*Constant*
 
 The maximum number of retries.
 
@@ -90,7 +87,7 @@ The maximum number of retries.
 
 ## test_crate::types::Map
 
-**Type:** Type Alias
+*Type Alias*: `std::collections::HashMap<K, V>`
 
 A type alias for a generic key-value map.
 
@@ -98,7 +95,7 @@ A type alias for a generic key-value map.
 
 ## test_crate::types::Pair
 
-**Type:** Struct
+*Struct*
 
 A pair of related values.
 
@@ -107,35 +104,32 @@ A pair of related values.
 - U
 
 **Fields:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `first` | `T` | - |
-| `second` | `U` | - |
+- `first: T`
+- `second: U`
 
 **Methods:**
 
 - `fn new(first: T, second: U) -> Self` - Creates a new pair.
 - `fn swap(self: Self) -> Pair<U, T>` - Swaps the values in the pair.
 
-**Implemented Traits:** StructuralPartialEq, Eq, Copy
+**Traits:** Eq, Copy
 
 **Trait Implementations:**
 
 - **Clone**
-  - `fn clone(self: &Self) -> Pair<T, U>` - 
+  - `fn clone(self: &Self) -> Pair<T, U>`
 - **Debug**
-  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result`
 - **From**
-  - `fn from((first, second): (T, U)) -> Self` - 
+  - `fn from((first, second): (T, U)) -> Self`
 - **PartialEq**
-  - `fn eq(self: &Self, other: &Pair<T, U>) -> bool` - 
+  - `fn eq(self: &Self, other: &Pair<T, U>) -> bool`
 
 
 
 ## test_crate::types::RefStruct
 
-**Type:** Struct
+*Struct*
 
 A struct with a lifetime parameter.
 
@@ -145,10 +139,7 @@ Demonstrates borrowing data with an explicit lifetime.
 - 'a
 
 **Fields:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `data` | `&'a str` | - |
+- `data: &'a str`
 
 **Methods:**
 
@@ -159,7 +150,7 @@ Demonstrates borrowing data with an explicit lifetime.
 
 ## test_crate::types::Status
 
-**Type:** Enum
+*Enum*
 
 Represents the status of an operation.
 
@@ -169,13 +160,10 @@ This enum demonstrates:
 - Multiple variant types in one enum
 
 **Variants:**
-
-| Variant | Kind | Description |
-|---------|------|-------------|
-| `Idle` | Unit | The operation is idle and waiting to start. |
-| `Running` | Struct (1 fields) | The operation is running with progress information. |
-| `Completed` | Unit | The operation completed successfully. |
-| `Failed` | Struct (1 fields) | The operation failed with an error message. |
+- `Idle` - The operation is idle and waiting to start.
+- `Running{ progress: f32 }` - The operation is running with progress information.
+- `Completed` - The operation completed successfully.
+- `Failed{ error: String }` - The operation failed with an error message.
 
 **Methods:**
 
@@ -183,24 +171,22 @@ This enum demonstrates:
 - `fn is_completed(self: &Self) -> bool` - Returns `true` if the status is `Completed`.
 - `fn progress(self: &Self) -> Option<f32>` - Returns the progress if the status is `Running`.
 
-**Implemented Traits:** StructuralPartialEq
-
 **Trait Implementations:**
 
 - **PartialEq**
-  - `fn eq(self: &Self, other: &Status) -> bool` - 
+  - `fn eq(self: &Self, other: &Status) -> bool`
 - **Clone**
-  - `fn clone(self: &Self) -> Status` - 
+  - `fn clone(self: &Self) -> Status`
 - **Default**
-  - `fn default() -> Self` - 
+  - `fn default() -> Self`
 - **Debug**
-  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result` - 
+  - `fn fmt(self: &Self, f: & mut $crate::fmt::Formatter) -> $crate::fmt::Result`
 
 
 
 ## test_crate::types::StringMap
 
-**Type:** Type Alias
+*Type Alias*: `std::collections::HashMap<String, String>`
 
 A type alias for a string-to-string map.
 
