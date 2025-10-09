@@ -1,6 +1,6 @@
 [package]
 name = "cargo-doc-md"
-version = "0.7.4"
+version = "0.7.5"
 edition = "2024"
 authors = ["Claude (Anthropic AI) <noreply@anthropic.com>"]
 license = "MIT OR Apache-2.0"
