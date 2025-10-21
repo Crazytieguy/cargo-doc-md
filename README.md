@@ -19,11 +19,14 @@ cargo doc-md
 # Document only dependencies
 cargo doc-md --all-deps
 
-# Document specific dependencies
-cargo doc-md --deps tokio,axum
+# Document specific crates
+cargo doc-md tokio serde axum
 
 # Custom output directory
 cargo doc-md -o docs/
+
+# Convert existing rustdoc JSON
+cargo doc-md --json target/doc/my_crate.json
 ```
 
 ### Output Structure
@@ -37,11 +40,12 @@ target/doc-md/
     module2.md
     sub/
       nested_module.md
-  deps/
-    tokio/
-      index.md
-      io.md
-      net.md
+  tokio/
+    index.md
+    io.md
+    net.md
+  serde/
+    index.md
     ...
 ```
 
@@ -66,14 +70,17 @@ target/doc-md/
 ## Options
 
 ```
-cargo doc-md [OPTIONS] [INPUT]
+cargo doc-md [OPTIONS] [CRATES...]
+
+Arguments:
+  [CRATES...]               Specific crate(s) to document (omit for current crate + all deps)
 
 Options:
   -o, --output <DIR>        Output directory [default: target/doc-md]
       --all-deps            Document only dependencies (exclude current crate)
-      --deps <CRATES>       Document specific dependencies (comma-separated)
       --include-private     Include private items
-  -h, --help               Show help
+      --json <FILE>         Convert existing rustdoc JSON file
+  -h, --help                Show help
 ```
 
 Run `cargo doc-md --help` for detailed information.
