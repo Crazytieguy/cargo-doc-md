@@ -6,7 +6,9 @@ A Cargo subcommand that generates markdown documentation for Rust crates and the
 
 ## Installation
 
+**Requires Rust nightly** (uses unstable rustdoc features):
 ```bash
+rustup install nightly
 cargo install cargo-doc-md
 ```
 
@@ -84,8 +86,6 @@ Options:
 ```
 
 Run `cargo doc-md --help` for detailed information.
-
-Requires Rust nightly.
 
 ## Upgrading from 0.7.x
 
