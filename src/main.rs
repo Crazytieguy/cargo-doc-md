@@ -90,11 +90,10 @@ fn main() -> Result<()> {
             .file_stem()
             .and_then(|s| s.to_str())
             .context("Invalid JSON filename - could not extract crate name")?;
-        println!(
-            "✓ Conversion complete! Output written to: {}/{}/index.md",
-            cli.output.display(),
-            crate_name
-        );
+
+        // Generate master index for consistency with other modes
+        generate_master_index(&cli.output, None, &[crate_name.to_string()])?;
+
         return Ok(());
     }
 
