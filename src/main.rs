@@ -61,6 +61,11 @@ fn main() -> Result<()> {
         bail!("Cannot use --all-deps with specific crate names");
     }
 
+    // Verify nightly toolchain is available (unless only using --json mode)
+    if cli.json.is_none() {
+        check_nightly_toolchain()?;
+    }
+
     // Clean up old directory structure (migration from v0.7.x)
     cleanup_old_structure(&cli.output)?;
 
@@ -80,11 +85,11 @@ fn main() -> Result<()> {
 
         cargo_doc_md::convert_json_file(&options)?;
 
-        // Try to determine the crate name from the output
+        // Determine the crate name from the JSON file path
         let crate_name = json_path
             .file_stem()
             .and_then(|s| s.to_str())
-            .unwrap_or("unknown");
+            .context("Invalid JSON filename - could not extract crate name")?;
         println!(
             "✓ Conversion complete! Output written to: {}/{}/index.md",
             cli.output.display(),
@@ -121,6 +126,23 @@ fn main() -> Result<()> {
 struct Dependency {
     name: String,
     version: String,
+}
+
+fn check_nightly_toolchain() -> Result<()> {
+    let output = Command::new("cargo")
+        .args(["+nightly", "--version"])
+        .output()
+        .context("Failed to run cargo +nightly")?;
+
+    if !output.status.success() {
+        bail!(
+            "Nightly toolchain not installed or not available.\n\
+             This tool requires Rust nightly for unstable rustdoc features.\n\
+             Install with: rustup install nightly"
+        );
+    }
+
+    Ok(())
 }
 
 fn cleanup_old_structure(output_dir: &Path) -> Result<()> {
@@ -226,24 +248,17 @@ fn document_current_crate(cli: &Cli) -> Result<Option<String>> {
         .as_array()
         .context("Missing 'packages' in metadata")?;
 
-    // Get the root package name using resolve.root if available, otherwise first package
-    let crate_name = if let Some(root_id) = metadata["resolve"]["root"].as_str() {
-        packages
-            .iter()
-            .find(|p| p["id"].as_str() == Some(root_id))
-            .and_then(|p| p["name"].as_str())
-            .context("Root package not found")?
-            .to_string()
-    } else {
-        // Fallback for when resolve is not available (e.g., with --no-deps)
-        packages
-            .first()
-            .context("No packages found in metadata")?
-            ["name"]
-            .as_str()
-            .context("Missing 'name' in package")?
-            .to_string()
-    };
+    // Get the root package name using resolve.root
+    let root_id = metadata["resolve"]["root"]
+        .as_str()
+        .context("Missing 'resolve.root' in metadata - is this a workspace without a default package?")?;
+
+    let crate_name = packages
+        .iter()
+        .find(|p| p["id"].as_str() == Some(root_id))
+        .and_then(|p| p["name"].as_str())
+        .context("Root package not found in packages list")?
+        .to_string();
 
     // Find the generated JSON file
     let json_path =
@@ -274,6 +289,38 @@ fn document_current_crate(cli: &Cli) -> Result<Option<String>> {
     Ok(Some(crate_name))
 }
 
+fn document_dependencies_internal(
+    deps_to_document: &[Dependency],
+    output_dir: &Path,
+    include_private: bool,
+) -> (Vec<String>, Vec<String>) {
+    let mut successful = Vec::new();
+    let mut failed = Vec::new();
+
+    for dep in deps_to_document {
+        match document_single_dependency(dep, output_dir, include_private) {
+            Ok(()) => {
+                successful.push(dep.name.clone());
+                println!("  ✓ {} → {}/{}/index.md", dep.name, output_dir.display(), dep.name);
+            }
+            Err(e) => {
+                failed.push(dep.name.clone());
+                println!("  ✗ {} - {}", dep.name, e);
+            }
+        }
+    }
+
+    (successful, failed)
+}
+
+fn print_documentation_summary(successful: &[String], failed: &[String]) {
+    println!("\n📊 Summary:");
+    println!("  ✓ Successful: {}", successful.len());
+    if !failed.is_empty() {
+        println!("  ✗ Failed: {} ({})", failed.len(), failed.join(", "));
+    }
+}
+
 fn document_all_dependencies(cli: &Cli) -> Result<Vec<String>> {
     let deps_to_document = get_all_dependencies()?;
 
@@ -284,27 +331,13 @@ fn document_all_dependencies(cli: &Cli) -> Result<Vec<String>> {
 
     println!("📦 Documenting {} dependencies...", deps_to_document.len());
 
-    let mut successful = Vec::new();
-    let mut failed = Vec::new();
+    let (successful, failed) = document_dependencies_internal(
+        &deps_to_document,
+        &cli.output,
+        cli.include_private,
+    );
 
-    for dep in &deps_to_document {
-        match document_single_dependency(dep, &cli.output, cli.include_private) {
-            Ok(()) => {
-                successful.push(dep.name.clone());
-                println!("  ✓ {} → {}/{}/index.md", dep.name, cli.output.display(), dep.name);
-            }
-            Err(e) => {
-                failed.push(dep.name.clone());
-                println!("  ✗ {} - {}", dep.name, e);
-            }
-        }
-    }
-
-    println!("\n📊 Summary:");
-    println!("  ✓ Successful: {}", successful.len());
-    if !failed.is_empty() {
-        println!("  ✗ Failed: {} ({})", failed.len(), failed.join(", "));
-    }
+    print_documentation_summary(&successful, &failed);
 
     Ok(successful)
 }
@@ -318,27 +351,13 @@ fn document_dependencies(cli: &Cli) -> Result<()> {
 
     println!("📦 Documenting {} dependencies...", deps_to_document.len());
 
-    let mut successful = Vec::new();
-    let mut failed = Vec::new();
+    let (successful, failed) = document_dependencies_internal(
+        &deps_to_document,
+        &cli.output,
+        cli.include_private,
+    );
 
-    for dep in &deps_to_document {
-        match document_single_dependency(dep, &cli.output, cli.include_private) {
-            Ok(()) => {
-                successful.push(dep.name.clone());
-                println!("  ✓ {} → {}/{}/index.md", dep.name, cli.output.display(), dep.name);
-            }
-            Err(e) => {
-                failed.push(dep.name.clone());
-                println!("  ✗ {} - {}", dep.name, e);
-            }
-        }
-    }
-
-    println!("\n📊 Summary:");
-    println!("  ✓ Successful: {}", successful.len());
-    if !failed.is_empty() {
-        println!("  ✗ Failed: {} ({})", failed.len(), failed.join(", "));
-    }
+    print_documentation_summary(&successful, &failed);
 
     if !successful.is_empty() {
         generate_master_index(&cli.output, None, &successful)?;
