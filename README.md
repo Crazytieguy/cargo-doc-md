@@ -87,6 +87,15 @@ Run `cargo doc-md --help` for detailed information.
 
 Requires Rust nightly.
 
+## Upgrading from 0.7.x
+
+**Breaking changes** in 0.8.0:
+- Directory structure flattened: `deps/crate/` → `crate/`
+- CLI changed: `--deps tokio,serde` → `tokio serde`
+- JSON conversion: now requires `--json` flag
+
+Tool auto-migrates old structure on first run. Update your scripts accordingly.
+
 ## Development
 
 This project uses snapshot testing to ensure output quality and consistency. Run tests with:

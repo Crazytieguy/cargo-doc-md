@@ -55,10 +55,10 @@ fn main() -> Result<()> {
 
     // Validate flag combinations
     if cli.json.is_some() && !cli.crates.is_empty() {
-        bail!("Cannot specify crate names with --json flag");
+        bail!("Cannot use crate names with --json (crate name extracted from JSON file)\nUse: cargo doc-md --json <file.json>");
     }
     if cli.all_deps && !cli.crates.is_empty() {
-        bail!("Cannot use --all-deps with specific crate names");
+        bail!("Cannot use --all-deps with specific crates\nUse: cargo doc-md --all-deps  OR  cargo doc-md crate1 crate2");
     }
 
     // Verify nightly toolchain is available (unless only using --json mode)
@@ -123,6 +123,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[derive(Debug)]
 struct Dependency {
     name: String,
     version: String,
@@ -251,7 +252,7 @@ fn document_current_crate(cli: &Cli) -> Result<Option<String>> {
     // Get the root package name using resolve.root
     let root_id = metadata["resolve"]["root"]
         .as_str()
-        .context("Missing 'resolve.root' in metadata - is this a workspace without a default package?")?;
+        .context("Missing 'resolve.root' - run from a Cargo project directory")?;
 
     let crate_name = packages
         .iter()
@@ -289,7 +290,7 @@ fn document_current_crate(cli: &Cli) -> Result<Option<String>> {
     Ok(Some(crate_name))
 }
 
-fn document_dependencies_internal(
+fn try_document_dependencies(
     deps_to_document: &[Dependency],
     output_dir: &Path,
     include_private: bool,
@@ -331,7 +332,7 @@ fn document_all_dependencies(cli: &Cli) -> Result<Vec<String>> {
 
     println!("📦 Documenting {} dependencies...", deps_to_document.len());
 
-    let (successful, failed) = document_dependencies_internal(
+    let (successful, failed) = try_document_dependencies(
         &deps_to_document,
         &cli.output,
         cli.include_private,
@@ -351,7 +352,7 @@ fn document_dependencies(cli: &Cli) -> Result<()> {
 
     println!("📦 Documenting {} dependencies...", deps_to_document.len());
 
-    let (successful, failed) = document_dependencies_internal(
+    let (successful, failed) = try_document_dependencies(
         &deps_to_document,
         &cli.output,
         cli.include_private,
@@ -462,17 +463,18 @@ fn document_single_dependency(
         if stderr.contains("no library targets found") {
             bail!("no library target found (binary-only crate)");
         }
-        // Show abbreviated error to avoid clutter
-        let error_summary = stderr
+        // Show first few error lines
+        let error_lines: Vec<&str> = stderr
             .lines()
             .filter(|line| line.contains("error") || line.contains("failed"))
-            .take(3)
-            .collect::<Vec<_>>()
-            .join("; ");
-        if !error_summary.is_empty() {
-            bail!("build failed: {}", error_summary);
+            .take(2)
+            .collect();
+        if !error_lines.is_empty() {
+            bail!("Failed to build '{}':\n{}\n\nRun 'cargo build -p {}' for full details",
+                  dep.name, error_lines.join("\n"), package_spec);
         }
-        bail!("cargo rustdoc failed (exit code: {})", output.status);
+        bail!("Failed to build '{}' (exit code: {})\nRun 'cargo build -p {}' for details",
+              dep.name, output.status, package_spec);
     }
 
     // Find the generated JSON file
@@ -512,9 +514,9 @@ fn generate_master_index(
     if let Some(crate_name) = current_crate {
         content.push_str("## Current Crate\n\n");
         content.push_str(&format!(
-            "- [`{}`]({}index.md)\n\n",
+            "- [`{}`]({}/index.md)\n\n",
             crate_name,
-            crate_name.to_string() + "/"
+            crate_name
         ));
     }
 
