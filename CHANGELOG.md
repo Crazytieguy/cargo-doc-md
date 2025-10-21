@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.8.0] - Unreleased
+## [0.8.0] - 2025-10-21
 
 ### Changed (Breaking)
 - **Flattened directory structure**: Dependencies now at `target/doc-md/crate/` instead of `target/doc-md/deps/crate/`
