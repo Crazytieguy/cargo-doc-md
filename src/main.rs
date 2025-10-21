@@ -12,12 +12,14 @@ use std::process::Command;
                   Default behavior: Documents current crate + all dependencies with multi-file output.\n\
                   Creates a master index and organizes modules into separate files for easy navigation.\n\n\
                   Usage:\n  \
-                  cargo doc-md              # Document current crate + all dependencies\n  \
-                  cargo doc-md --all-deps   # Document only dependencies"
+                  cargo doc-md                  # Document current crate + all dependencies\n  \
+                  cargo doc-md tokio serde      # Document specific crates\n  \
+                  cargo doc-md --all-deps       # Document only dependencies\n  \
+                  cargo doc-md --json file.json # Convert existing rustdoc JSON"
 )]
 struct Cli {
-    #[arg(help = "Path to rustdoc JSON file (omit to auto-document current crate + all deps)")]
-    input: Option<PathBuf>,
+    #[arg(help = "Specific crate(s) to document (omit for current crate + all deps)")]
+    crates: Vec<String>,
 
     #[arg(
         short,
@@ -31,12 +33,8 @@ struct Cli {
     #[arg(long, help = "Include private items in documentation")]
     include_private: bool,
 
-    #[arg(
-        long,
-        help = "Document only specific dependencies (comma-separated)",
-        value_delimiter = ','
-    )]
-    deps: Vec<String>,
+    #[arg(long, help = "Convert existing rustdoc JSON file")]
+    json: Option<PathBuf>,
 
     #[arg(
         long,
@@ -55,24 +53,58 @@ fn main() -> Result<()> {
 
     let cli = Cli::parse_from(args);
 
-    // Explicit input file - just convert that file
-    if let Some(input) = cli.input.as_ref() {
+    // Validate flag combinations
+    if cli.json.is_some() && !cli.crates.is_empty() {
+        bail!("Cannot use crate names with --json (crate name extracted from JSON file)\nUse: cargo doc-md --json <file.json>");
+    }
+    if cli.all_deps && !cli.crates.is_empty() {
+        bail!("Cannot use --all-deps with specific crates\nUse: cargo doc-md --all-deps  OR  cargo doc-md crate1 crate2");
+    }
+
+    // Verify nightly toolchain is available (unless only using --json mode)
+    if cli.json.is_none() {
+        check_nightly_toolchain()?;
+    }
+
+    // Clean up old directory structure (migration from v0.7.x)
+    cleanup_old_structure(&cli.output)?;
+
+    // Explicit JSON file - just convert that file
+    if let Some(json_path) = cli.json.as_ref() {
+        if !json_path.exists() {
+            bail!("JSON file not found: {}", json_path.display());
+        }
+        if !json_path.is_file() {
+            bail!("Path is not a file: {}", json_path.display());
+        }
         let options = ConversionOptions {
-            input_path: input,
+            input_path: json_path,
             output_dir: &cli.output,
             include_private: cli.include_private,
         };
 
         cargo_doc_md::convert_json_file(&options)?;
-        println!(
-            "✓ Conversion complete! Output written to: {}",
-            cli.output.display()
-        );
+
+        // Determine the crate name from the JSON file path
+        let crate_name = json_path
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .context("Invalid JSON filename - could not extract crate name")?;
+
+        // Generate master index for consistency with other modes
+        generate_master_index(&cli.output, None, &[crate_name.to_string()])?;
+
+        return Ok(());
+    }
+
+    // Specific crates requested
+    if !cli.crates.is_empty() {
+        document_specific_crates(&cli)?;
         return Ok(());
     }
 
     // Dependency-only mode
-    if cli.all_deps || !cli.deps.is_empty() {
+    if cli.all_deps {
         document_dependencies(&cli)?;
         return Ok(());
     }
@@ -90,9 +122,82 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[derive(Debug)]
 struct Dependency {
     name: String,
     version: String,
+}
+
+fn check_nightly_toolchain() -> Result<()> {
+    let output = Command::new("cargo")
+        .args(["+nightly", "--version"])
+        .output()
+        .context("Failed to run cargo +nightly")?;
+
+    if !output.status.success() {
+        bail!(
+            "Nightly toolchain not installed or not available.\n\
+             This tool requires Rust nightly for unstable rustdoc features.\n\
+             Install with: rustup install nightly"
+        );
+    }
+
+    Ok(())
+}
+
+fn cleanup_old_structure(output_dir: &Path) -> Result<()> {
+    use std::fs;
+
+    let old_deps_dir = output_dir.join("deps");
+    if old_deps_dir.exists() && old_deps_dir.is_dir() {
+        println!("⚠  Cleaning up old directory structure ({})", old_deps_dir.display());
+        if let Err(e) = fs::remove_dir_all(&old_deps_dir) {
+            println!("⚠  Could not remove old deps directory: {}", e);
+            println!("   You may need to manually delete: {}", old_deps_dir.display());
+        } else {
+            println!("✓ Migrated to new flat structure\n");
+        }
+    }
+    Ok(())
+}
+
+fn document_specific_crates(cli: &Cli) -> Result<()> {
+    println!("📦 Documenting {} specific crate(s)...", cli.crates.len());
+
+    let mut successful = Vec::new();
+    let mut failed = Vec::new();
+
+    for crate_name in &cli.crates {
+        println!("\n🔨 Generating docs for '{}'...", crate_name);
+
+        let dep = Dependency {
+            name: crate_name.clone(),
+            version: String::new(),
+        };
+
+        match document_single_dependency(&dep, &cli.output, cli.include_private) {
+            Ok(()) => {
+                successful.push(crate_name.clone());
+                println!("  ✓ {} → {}/{}/index.md", crate_name, cli.output.display(), crate_name);
+            }
+            Err(e) => {
+                failed.push(crate_name.clone());
+                println!("  ✗ Failed to document '{}': {}", crate_name, e);
+            }
+        }
+    }
+
+    println!("\n📊 Summary:");
+    println!("  ✓ Successful: {}", successful.len());
+    if !failed.is_empty() {
+        println!("  ✗ Failed: {} ({})", failed.len(), failed.join(", "));
+    }
+
+    if !successful.is_empty() {
+        generate_master_index(&cli.output, None, &successful)?;
+    }
+
+    Ok(())
 }
 
 fn document_current_crate(cli: &Cli) -> Result<Option<String>> {
@@ -143,12 +248,16 @@ fn document_current_crate(cli: &Cli) -> Result<Option<String>> {
         .as_array()
         .context("Missing 'packages' in metadata")?;
 
-    // Get the root package name
-    let root_package = packages.first().context("No packages found in metadata")?;
-
-    let crate_name = root_package["name"]
+    // Get the root package name using resolve.root
+    let root_id = metadata["resolve"]["root"]
         .as_str()
-        .context("Missing 'name' in package")?
+        .context("Missing 'resolve.root' - run from a Cargo project directory")?;
+
+    let crate_name = packages
+        .iter()
+        .find(|p| p["id"].as_str() == Some(root_id))
+        .and_then(|p| p["name"].as_str())
+        .context("Root package not found in packages list")?
         .to_string();
 
     // Find the generated JSON file
@@ -172,12 +281,44 @@ fn document_current_crate(cli: &Cli) -> Result<Option<String>> {
     cargo_doc_md::convert_json_file(&options)?;
 
     println!(
-        "✓ Documentation complete! Output written to: {}/{}",
+        "✓ Current crate documented: {}/{}/index.md",
         cli.output.display(),
         crate_name
     );
 
     Ok(Some(crate_name))
+}
+
+fn try_document_dependencies(
+    deps_to_document: &[Dependency],
+    output_dir: &Path,
+    include_private: bool,
+) -> (Vec<String>, Vec<String>) {
+    let mut successful = Vec::new();
+    let mut failed = Vec::new();
+
+    for dep in deps_to_document {
+        match document_single_dependency(dep, output_dir, include_private) {
+            Ok(()) => {
+                successful.push(dep.name.clone());
+                println!("  ✓ {} → {}/{}/index.md", dep.name, output_dir.display(), dep.name);
+            }
+            Err(e) => {
+                failed.push(dep.name.clone());
+                println!("  ✗ {} - {}", dep.name, e);
+            }
+        }
+    }
+
+    (successful, failed)
+}
+
+fn print_documentation_summary(successful: &[String], failed: &[String]) {
+    println!("\n📊 Summary:");
+    println!("  ✓ Successful: {}", successful.len());
+    if !failed.is_empty() {
+        println!("  ✗ Failed: {} ({})", failed.len(), failed.join(", "));
+    }
 }
 
 fn document_all_dependencies(cli: &Cli) -> Result<Vec<String>> {
@@ -190,52 +331,19 @@ fn document_all_dependencies(cli: &Cli) -> Result<Vec<String>> {
 
     println!("📦 Documenting {} dependencies...", deps_to_document.len());
 
-    let mut successful = Vec::new();
-    let mut failed = Vec::new();
-
-    for dep in &deps_to_document {
-        println!("\n🔨 Generating docs for '{}'...", dep.name);
-
-        match document_single_dependency(dep, &cli.output, cli.include_private) {
-            Ok(()) => {
-                successful.push(dep.name.clone());
-                println!("  ✓ Successfully documented '{}'", dep.name);
-            }
-            Err(e) => {
-                failed.push(dep.name.clone());
-                println!("  ✗ Failed to document '{}': {}", dep.name, e);
-            }
-        }
-    }
-
-    println!("\n📊 Summary:");
-    println!("  ✓ Successful: {}", successful.len());
-    if !failed.is_empty() {
-        println!("  ✗ Failed: {} ({})", failed.len(), failed.join(", "));
-    }
-    println!(
-        "\n✓ Documentation written to: {}/deps",
-        cli.output.display()
+    let (successful, failed) = try_document_dependencies(
+        &deps_to_document,
+        &cli.output,
+        cli.include_private,
     );
+
+    print_documentation_summary(&successful, &failed);
 
     Ok(successful)
 }
 
 fn document_dependencies(cli: &Cli) -> Result<()> {
-    // Get list of dependencies to document
-    let deps_to_document = if cli.all_deps {
-        get_all_dependencies()?
-    } else {
-        // For manually specified deps, we don't have version info
-        // so we'll pass empty version (will attempt without version)
-        cli.deps
-            .iter()
-            .map(|name| Dependency {
-                name: name.clone(),
-                version: String::new(),
-            })
-            .collect()
-    };
+    let deps_to_document = get_all_dependencies()?;
 
     if deps_to_document.is_empty() {
         bail!("No dependencies found to document");
@@ -243,30 +351,17 @@ fn document_dependencies(cli: &Cli) -> Result<()> {
 
     println!("📦 Documenting {} dependencies...", deps_to_document.len());
 
-    let mut successful = 0;
-    let mut failed = Vec::new();
+    let (successful, failed) = try_document_dependencies(
+        &deps_to_document,
+        &cli.output,
+        cli.include_private,
+    );
 
-    for dep in &deps_to_document {
-        println!("\n🔨 Generating docs for '{}'...", dep.name);
+    print_documentation_summary(&successful, &failed);
 
-        match document_single_dependency(dep, &cli.output, cli.include_private) {
-            Ok(()) => {
-                successful += 1;
-                println!("  ✓ Successfully documented '{}'", dep.name);
-            }
-            Err(e) => {
-                failed.push(dep.name.clone());
-                println!("  ✗ Failed to document '{}': {}", dep.name, e);
-            }
-        }
+    if !successful.is_empty() {
+        generate_master_index(&cli.output, None, &successful)?;
     }
-
-    println!("\n📊 Summary:");
-    println!("  ✓ Successful: {}", successful);
-    if !failed.is_empty() {
-        println!("  ✗ Failed: {} ({})", failed.len(), failed.join(", "));
-    }
-    println!("\n✓ Documentation written to: {}", cli.output.display());
 
     Ok(())
 }
@@ -346,7 +441,6 @@ fn document_single_dependency(
     };
 
     // Generate rustdoc JSON for the dependency
-    // Suppress stderr to hide panics and verbose cargo output
     let output = Command::new("cargo")
         .args([
             "+nightly",
@@ -359,12 +453,27 @@ fn document_single_dependency(
             "-Z",
             "unstable-options",
         ])
-        .stderr(std::process::Stdio::null()) // Suppress stderr (hides panics)
         .output()
         .context("Failed to run cargo rustdoc")?;
 
     if !output.status.success() {
-        bail!("cargo rustdoc failed (exit code: {})", output.status);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        // Check for known non-error cases
+        if stderr.contains("no library targets found") {
+            bail!("no library target found (binary-only crate)");
+        }
+        // Show first few error lines
+        let error_lines: Vec<&str> = stderr
+            .lines()
+            .filter(|line| line.contains("error") || line.contains("failed"))
+            .take(2)
+            .collect();
+        if !error_lines.is_empty() {
+            bail!("Failed to build '{}':\n{}\n\nRun 'cargo build -p {}' for full details",
+                  dep.name, error_lines.join("\n"), package_spec);
+        }
+        bail!("Failed to build '{}' (exit code: {})\nRun 'cargo build -p {}' for details",
+              dep.name, output.status, package_spec);
     }
 
     // Find the generated JSON file
@@ -375,13 +484,11 @@ fn document_single_dependency(
         bail!("Generated JSON file not found at {}", json_path.display());
     }
 
-    // Convert to markdown in deps subdirectory
+    // Convert to markdown directly in output directory
     // The converter will create a subdirectory with the crate name
-    let output_dir = output_base.join("deps");
-
     let options = ConversionOptions {
         input_path: &json_path,
-        output_dir: &output_dir,
+        output_dir: output_base,
         include_private,
     };
 
@@ -406,9 +513,9 @@ fn generate_master_index(
     if let Some(crate_name) = current_crate {
         content.push_str("## Current Crate\n\n");
         content.push_str(&format!(
-            "- [`{}`]({}index.md)\n\n",
+            "- [`{}`]({}/index.md)\n\n",
             crate_name,
-            crate_name.to_string() + "/"
+            crate_name
         ));
     }
 
@@ -417,7 +524,7 @@ fn generate_master_index(
         content.push_str(&format!("## Dependencies ({})\n\n", dependencies.len()));
 
         for dep in dependencies {
-            let dep_path = format!("deps/{}/index.md", dep);
+            let dep_path = format!("{}/index.md", dep);
             content.push_str(&format!("- [`{}`]({})\n", dep, dep_path));
         }
         content.push('\n');
@@ -432,7 +539,7 @@ fn generate_master_index(
     fs::write(&index_path, content)
         .with_context(|| format!("Failed to write master index: {}", index_path.display()))?;
 
-    println!("\n✓ Master index created: {}", index_path.display());
+    println!("\n✓ Master index: {}", index_path.display());
 
     Ok(())
 }

@@ -6,7 +6,9 @@ A Cargo subcommand that generates markdown documentation for Rust crates and the
 
 ## Installation
 
+**Requires Rust nightly** (uses unstable rustdoc features):
 ```bash
+rustup install nightly
 cargo install cargo-doc-md
 ```
 
@@ -19,11 +21,14 @@ cargo doc-md
 # Document only dependencies
 cargo doc-md --all-deps
 
-# Document specific dependencies
-cargo doc-md --deps tokio,axum
+# Document specific crates
+cargo doc-md tokio serde axum
 
 # Custom output directory
 cargo doc-md -o docs/
+
+# Convert existing rustdoc JSON
+cargo doc-md --json target/doc/my_crate.json
 ```
 
 ### Output Structure
@@ -37,11 +42,12 @@ target/doc-md/
     module2.md
     sub/
       nested_module.md
-  deps/
-    tokio/
-      index.md
-      io.md
-      net.md
+  tokio/
+    index.md
+    io.md
+    net.md
+  serde/
+    index.md
     ...
 ```
 
@@ -66,19 +72,29 @@ target/doc-md/
 ## Options
 
 ```
-cargo doc-md [OPTIONS] [INPUT]
+cargo doc-md [OPTIONS] [CRATES...]
+
+Arguments:
+  [CRATES...]               Specific crate(s) to document (omit for current crate + all deps)
 
 Options:
   -o, --output <DIR>        Output directory [default: target/doc-md]
       --all-deps            Document only dependencies (exclude current crate)
-      --deps <CRATES>       Document specific dependencies (comma-separated)
       --include-private     Include private items
-  -h, --help               Show help
+      --json <FILE>         Convert existing rustdoc JSON file
+  -h, --help                Show help
 ```
 
 Run `cargo doc-md --help` for detailed information.
 
-Requires Rust nightly.
+## Upgrading from 0.7.x
+
+**Breaking changes** in 0.8.0:
+- Directory structure flattened: `deps/crate/` → `crate/`
+- CLI changed: `--deps tokio,serde` → `tokio serde`
+- JSON conversion: now requires `--json` flag
+
+Tool auto-migrates old structure on first run. Update your scripts accordingly.
 
 ## Development
 
