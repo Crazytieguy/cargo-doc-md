@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.8.1] - 2025-10-21
+
+### Fixed
+- Removed `--no-deps` flag from cargo metadata call to fix "Missing 'resolve.root'" error
+
 ## [0.8.0] - 2025-10-21
 
 ### Changed (Breaking)

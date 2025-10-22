@@ -230,7 +230,7 @@ fn document_current_crate(cli: &Cli) -> Result<Option<String>> {
 
     // Get the crate name from cargo metadata
     let metadata_output = Command::new("cargo")
-        .args(["metadata", "--format-version=1", "--no-deps"])
+        .args(["metadata", "--format-version=1"])
         .output()
         .context("Failed to run cargo metadata")?;
 
