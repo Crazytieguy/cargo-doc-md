@@ -1,0 +1,3 @@
+- See @README.md for project details
+- Run `cargo fmt`, `cargo clippy --all-targets`, and `cargo test` before commiting
+- Update the changelog and readme before releasing. Keep the readme concise
