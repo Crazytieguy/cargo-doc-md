@@ -1,4 +1,5 @@
 - See @README.md for project details
 - Run `cargo fmt`, `cargo clippy --all-targets`, and `cargo test` before commiting
 - Update the changelog and readme before releasing. Keep the readme concise
+- Release with `cargo publish`, then tag with `git tag vX.Y.Z && git push origin vX.Y.Z`
 - Never run `cargo doc --open`
