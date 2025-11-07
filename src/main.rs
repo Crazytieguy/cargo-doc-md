@@ -307,7 +307,7 @@ fn document_specific_packages(metadata: &serde_json::Value, cli: &Cli) -> Result
                     "  ✓ {} → {}/{}/index.md",
                     package_name,
                     cli.output.display(),
-                    package_name
+                    package_name.replace("-", "_")
                 );
 
                 // Get dependencies for this package if not --no-deps
@@ -489,7 +489,7 @@ fn document_current_crate(metadata: &serde_json::Value, cli: &Cli) -> Result<Opt
     println!(
         "✓ Current crate documented: {}/{}/index.md",
         cli.output.display(),
-        crate_name
+        crate_name.replace("-", "_")
     );
 
     Ok(Some(crate_name))
@@ -514,7 +514,7 @@ fn try_document_dependencies(
                     "  ✓ {} → {}/{}/index.md",
                     dep.name,
                     output_dir.display(),
-                    dep.name
+                    dep.name.replace("-", "_")
                 );
             }
             Ok(false) => {
@@ -615,7 +615,7 @@ fn document_workspace(metadata: &serde_json::Value, cli: &Cli) -> Result<()> {
                     "  ✓ {} → {}/{}/index.md",
                     member.name,
                     cli.output.display(),
-                    member.name
+                    member.name.replace("-", "_")
                 );
 
                 if !cli.no_deps {

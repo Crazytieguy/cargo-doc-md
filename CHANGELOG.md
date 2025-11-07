@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.10.2] - 2025-11-07
+
+### Fixed
+- **Console output paths**: Fixed console output to show correct file paths with underscores for crates with hyphens in their names
+
 ## [0.10.1] - 2025-11-07
 
 ### Fixed
