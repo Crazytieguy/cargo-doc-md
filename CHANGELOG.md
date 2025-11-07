@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.9.0] - 2025-11-06
+
+### Added
+- **Workspace support**: `--workspace` flag to document all workspace members and their dependencies
+- **Package selection**: `-p/--package` flag to document specific packages (can be repeated)
+- **Dependency control**: `--no-deps` flag to exclude dependencies (matches `cargo doc --no-deps`)
+- **Transitive dependencies**: Now documents all transitive dependencies, not just direct ones
+- **Platform filtering**: Automatically filters platform-specific dependencies using `cargo metadata --filter-platform`
+
+### Fixed
+- **`--include-private` flag now works**: Properly passes `--document-private-items` to rustdoc
+- **Renamed lib targets**: Correctly handles crates where `[lib] name` differs from package name
+- **Binary-only crates**: Now properly skipped instead of marked as successful
+- **Target directory detection**: Uses `metadata["target_directory"]` instead of hardcoded "target/doc"
+- **Output directory creation**: Ensures output directory exists before writing master index
+- **Error handling**: Replaced unsafe unwraps with proper error handling using let-else pattern
+- **Workspace member deduplication**: Prevents workspace crates from being scheduled twice as dependencies
+- **CLI flag conflicts**: Added proper `conflicts_with` attributes in Clap for mutually exclusive flags
+
+### Changed
+- CLI now uses `-p` flag instead of positional arguments for package names
+- README updated to reflect actual CLI interface (removed non-existent `--all-deps` flag)
+- Master index generation now handles edge cases (empty workspaces, binary-only crates)
+- Improved error messages for virtual workspaces and missing packages
+
 ## [0.8.1] - 2025-10-21
 
 ### Fixed

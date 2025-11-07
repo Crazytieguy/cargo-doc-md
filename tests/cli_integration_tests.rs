@@ -16,17 +16,21 @@ fn run_cargo_doc_md(args: &[&str]) -> Result<String, String> {
 }
 
 #[test]
-fn test_flag_validation_json_with_crates() {
-    let result = run_cargo_doc_md(&["--json", "test.json", "tokio"]);
+fn test_flag_validation_json_with_package() {
+    let result = run_cargo_doc_md(&["--json", "test.json", "-p", "tokio"]);
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("Cannot use crate names with --json"));
+    let err = result.unwrap_err();
+    // Clap's conflict error message
+    assert!(err.contains("cannot be used with") || err.contains("conflicts with"));
 }
 
 #[test]
-fn test_flag_validation_all_deps_with_crates() {
-    let result = run_cargo_doc_md(&["--all-deps", "tokio"]);
+fn test_flag_validation_workspace_with_package() {
+    let result = run_cargo_doc_md(&["--workspace", "-p", "tokio"]);
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("Cannot use --all-deps with specific crates"));
+    let err = result.unwrap_err();
+    // Clap's conflict error message
+    assert!(err.contains("cannot be used with") || err.contains("conflicts with"));
 }
 
 #[test]
@@ -60,7 +64,7 @@ fn test_migration_cleanup_behavior() {
     fs::write(deps_dir.join("test.txt"), "test content").unwrap();
 
     // Run - may succeed or fail, but deps/ should be cleaned up
-    let _ = run_cargo_doc_md(&["-o", output_dir.to_str().unwrap(), "--all-deps"]);
+    let _ = run_cargo_doc_md(&["-o", output_dir.to_str().unwrap()]);
 
     // The key assertion: old deps/ directory should be removed
     assert!(!deps_dir.exists(), "Old deps/ directory should be cleaned up on any run");
@@ -83,7 +87,8 @@ fn test_help_output() {
     assert!(output.status.success());
     assert!(combined.contains("Generate markdown documentation") || combined.contains("Cargo subcommand"));
     assert!(combined.contains("--json"));
-    assert!(combined.contains("--all-deps"));
+    assert!(combined.contains("--workspace"));
+    assert!(combined.contains("--package") || combined.contains("-p,"));
     assert!(combined.contains("--output") || combined.contains("-o,"));
 }
 
@@ -94,11 +99,98 @@ fn test_output_directory_creation() {
     fs::remove_dir_all(&output_dir).ok();
     assert!(!output_dir.exists());
 
-    // Run with --all-deps (may succeed or fail depending on dependencies)
-    let _ = run_cargo_doc_md(&["-o", output_dir.to_str().unwrap(), "--all-deps"]);
+    // Run with --no-deps (will document current crate only, should succeed)
+    let _ = run_cargo_doc_md(&["-o", output_dir.to_str().unwrap(), "--no-deps"]);
 
     // Key assertion: output directory should be created
     assert!(output_dir.exists(), "Output directory should be created");
 
     fs::remove_dir_all(&output_dir).ok();
+}
+
+#[test]
+fn test_package_flag_single() {
+    // Test that -p flag is accepted (gracefully fails if package doesn't exist)
+    let result = run_cargo_doc_md(&["-p", "nonexistent-crate-12345"]);
+    // May succeed (exit 0) with failure message or error out
+    if result.is_err() {
+        let err = result.unwrap_err();
+        // Should NOT contain flag validation errors
+        assert!(!err.contains("Cannot use"));
+    } else {
+        // If it succeeded, output should mention the failure
+        let output = result.unwrap();
+        assert!(output.contains("Failed") || output.contains("failed"));
+    }
+}
+
+#[test]
+fn test_package_flag_multiple() {
+    // Test that multiple -p flags are accepted
+    let result = run_cargo_doc_md(&["-p", "nonexistent-crate-1", "-p", "nonexistent-crate-2"]);
+    // May succeed (exit 0) with failure messages or error out
+    if result.is_err() {
+        let err = result.unwrap_err();
+        // Should NOT contain flag validation errors
+        assert!(!err.contains("Cannot use"));
+    } else {
+        // If it succeeded, should report failures
+        let output = result.unwrap();
+        assert!(output.contains("Failed") || output.contains("Summary"));
+    }
+}
+
+#[test]
+fn test_workspace_flag_in_single_crate() {
+    // Test --workspace in a single-crate project (this project)
+    let result = run_cargo_doc_md(&["--workspace", "--no-deps"]);
+    // Should succeed - this is a single-member workspace
+    // (or fail gracefully if not in workspace)
+    if result.is_err() {
+        let err = result.unwrap_err();
+        // If it errors, should be about workspace detection, not flag validation
+        assert!(
+            err.contains("workspace") || err.contains("Workspace"),
+            "Error should be about workspace detection: {}",
+            err
+        );
+    }
+}
+
+#[test]
+fn test_workspace_with_no_deps() {
+    // Test that --workspace --no-deps combination is valid
+    let result = run_cargo_doc_md(&["--workspace", "--no-deps"]);
+    if result.is_err() {
+        let err = result.unwrap_err();
+        // Should NOT be a flag validation error
+        assert!(!err.contains("Cannot use --workspace with"));
+    }
+}
+
+#[test]
+fn test_output_directory_validation_is_file() {
+    use std::io::Write;
+
+    let temp_file = std::env::temp_dir().join("cargo_doc_md_test_file.txt");
+    let mut file = fs::File::create(&temp_file).unwrap();
+    file.write_all(b"test").unwrap();
+    drop(file);
+
+    let result = run_cargo_doc_md(&["-o", temp_file.to_str().unwrap()]);
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert!(err.contains("is a file, not a directory"), "Error should mention file vs directory: {}", err);
+
+    fs::remove_file(&temp_file).ok();
+}
+
+#[test]
+fn test_output_directory_validation_parent_missing() {
+    let nonexistent_parent = PathBuf::from("/nonexistent_parent_dir_12345/output");
+
+    let result = run_cargo_doc_md(&["-o", nonexistent_parent.to_str().unwrap()]);
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert!(err.contains("Parent directory does not exist"), "Error should mention parent directory: {}", err);
 }

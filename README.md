@@ -18,11 +18,14 @@ cargo install cargo-doc-md
 # Document current crate + all dependencies (like cargo doc)
 cargo doc-md
 
-# Document only dependencies
-cargo doc-md --all-deps
+# Document current crate only (no dependencies)
+cargo doc-md --no-deps
 
-# Document specific crates
-cargo doc-md tokio serde axum
+# Document specific packages
+cargo doc-md -p tokio -p serde -p axum
+
+# Document all workspace members + dependencies
+cargo doc-md --workspace
 
 # Custom output directory
 cargo doc-md -o docs/
@@ -72,14 +75,13 @@ target/doc-md/
 ## Options
 
 ```
-cargo doc-md [OPTIONS] [CRATES...]
-
-Arguments:
-  [CRATES...]               Specific crate(s) to document (omit for current crate + all deps)
+cargo doc-md [OPTIONS]
 
 Options:
+  -p, --package <PACKAGE>   Package(s) to document with their dependencies (can be repeated)
   -o, --output <DIR>        Output directory [default: target/doc-md]
-      --all-deps            Document only dependencies (exclude current crate)
+      --workspace           Document all workspace members
+      --no-deps             Don't document dependencies
       --include-private     Include private items
       --json <FILE>         Convert existing rustdoc JSON file
   -h, --help                Show help
@@ -91,8 +93,9 @@ Run `cargo doc-md --help` for detailed information.
 
 **Breaking changes** in 0.8.0:
 - Directory structure flattened: `deps/crate/` → `crate/`
-- CLI changed: `--deps tokio,serde` → `tokio serde`
+- CLI changed: `--deps tokio,serde` → `-p tokio -p serde`
 - JSON conversion: now requires `--json` flag
+- Workspace support: use `--workspace` flag to document all members
 
 Tool auto-migrates old structure on first run. Update your scripts accordingly.
 
