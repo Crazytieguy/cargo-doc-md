@@ -57,7 +57,7 @@ This crate contains `unsafe` code examples for documentation purposes only.
 
 ### [`test_crate`](test_crate.md)
 
-*2 traits, 2 type aliases, 3 constants, 3 enums, 6 structs, 7 functions, 8 modules*
+*2 macros, 2 traits, 2 type aliases, 3 constants, 3 enums, 6 structs, 7 functions, 8 modules*
 
 ### [`async_example`](async_example.md)
 
@@ -65,7 +65,7 @@ This crate contains `unsafe` code examples for documentation purposes only.
 
 ### [`errors`](errors.md)
 
-*1 enums, 1 structs, 1 traits, 1 type aliases, 3 functions*
+*1 enum, 1 struct, 1 trait, 1 type alias, 3 functions*
 
 ### [`functions`](functions.md)
 
@@ -73,23 +73,23 @@ This crate contains `unsafe` code examples for documentation purposes only.
 
 ### [`lifetimes`](lifetimes.md)
 
-*1 enums, 1 traits, 3 functions, 4 structs*
+*1 enum, 1 trait, 3 functions, 4 structs*
 
 ### [`nested`](nested.md)
 
-*1 modules, 1 structs*
+*1 module, 1 struct*
 
 ### [`nested::inner`](nested/inner.md)
 
-*1 functions, 1 modules, 1 structs*
+*1 function, 1 module, 1 struct*
 
 ### [`nested::inner::deep`](nested/inner/deep.md)
 
-*1 functions, 1 modules, 1 structs*
+*1 function, 1 module, 1 struct*
 
 ### [`nested::inner::deep::deeper`](nested/inner/deep/deeper.md)
 
-*1 structs*
+*1 struct*
 
 ### [`patterns`](patterns.md)
 
@@ -101,8 +101,8 @@ This crate contains `unsafe` code examples for documentation purposes only.
 
 ### [`traits::private`](traits/private.md)
 
-*1 traits*
+*1 trait*
 
 ### [`types`](types.md)
 
-*1 enums, 2 constants, 2 type aliases, 3 structs*
+*1 enum, 2 constants, 2 type aliases, 3 structs*

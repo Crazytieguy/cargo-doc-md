@@ -19,6 +19,11 @@ expression: lib_content
 - [`traits`](#traits)
 - [`types`](#types) - Type definitions and containers.
 
+**Macros**
+
+- [`create_struct`](#create_struct)
+- [`max`](#max)
+
 **Structs**
 
 - [`BoundedGeneric`](#boundedgeneric)
@@ -188,13 +193,13 @@ expression: lib_content
 
 ## test_crate::MAX_SIZE
 
-*Constant*
+*Constant*: `usize`
 
 
 
 ## test_crate::MIN_SIZE
 
-*Constant*
+*Constant*: `usize`
 
 
 
@@ -294,7 +299,7 @@ expression: lib_content
 
 ## test_crate::VERSION
 
-*Constant*
+*Constant*: `&str`
 
 
 
@@ -308,6 +313,18 @@ expression: lib_content
 
 ```rust
 fn const_function(x: i32) -> i32
+```
+
+
+
+## test_crate::create_struct
+
+*Declarative Macro*
+
+```rust
+macro_rules! create_struct {
+    ($name:expr, $value:expr) => { ... };
+}
 ```
 
 
@@ -361,6 +378,19 @@ fn generic_function<T>(item: T) -> String
 
 
 ## Module: lifetimes
+
+
+
+## test_crate::max
+
+*Declarative Macro*
+
+```rust
+macro_rules! max {
+    ($x:expr) => { ... };
+    ($x:expr, $($y:expr),+) => { ... };
+}
+```
 
 
 

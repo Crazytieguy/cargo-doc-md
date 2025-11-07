@@ -156,6 +156,11 @@ fn can_format_item(item: &Item) -> bool {
             | ItemEnum::Module(_)
             | ItemEnum::Constant { .. }
             | ItemEnum::TypeAlias(_)
+            | ItemEnum::Static(_)
+            | ItemEnum::Union(_)
+            | ItemEnum::Macro(_)
+            | ItemEnum::ProcMacro(_)
+            | ItemEnum::TraitAlias(_)
     )
 }
 
@@ -607,9 +612,9 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
                 output.push_str(&format!("{}\n\n", docs));
             }
         }
-        ItemEnum::Constant { .. } => {
+        ItemEnum::Constant { type_, .. } => {
             output.push_str(&format!("## {}\n\n", name));
-            output.push_str("*Constant*\n\n");
+            output.push_str(&format!("*Constant*: `{}`\n\n", format_type(type_)));
 
             if let Some(docs) = &item.docs {
                 output.push_str(&format!("{}\n\n", docs));
@@ -622,6 +627,215 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
             if let Some(docs) = &item.docs {
                 output.push_str(&format!("{}\n\n", docs));
             }
+        }
+        ItemEnum::Static(s) => {
+            output.push_str(&format!("## {}\n\n", name));
+            output.push_str("*Static*\n\n");
+
+            if let Some(docs) = &item.docs {
+                output.push_str(&format!("{}\n\n", docs));
+            }
+
+            output.push_str("```rust\n");
+            output.push_str(&format!(
+                "{}static {}{}: {}",
+                if s.is_unsafe { "unsafe " } else { "" },
+                if s.is_mutable { "mut " } else { "" },
+                name,
+                format_type(&s.type_)
+            ));
+            output.push_str("\n```\n\n");
+        }
+        ItemEnum::Union(u) => {
+            output.push_str(&format!("## {}\n\n", name));
+            output.push_str("*Union*\n\n");
+
+            if let Some(docs) = &item.docs {
+                output.push_str(&format!("{}\n\n", docs));
+            }
+
+            let non_synthetic_params: Vec<_> = u
+                .generics
+                .params
+                .iter()
+                .filter(|p| {
+                    !matches!(&p.kind, rustdoc_types::GenericParamDefKind::Lifetime { .. })
+                        || !is_synthetic_lifetime(&p.name)
+                })
+                .collect();
+
+            if !non_synthetic_params.is_empty() {
+                output.push_str("**Generic Parameters:**\n");
+                for param in non_synthetic_params {
+                    output.push_str(&format!("- {}\n", format_generic_param(param)));
+                }
+                output.push('\n');
+            }
+
+            if !u.fields.is_empty() {
+                output.push_str("**Fields:**\n");
+                for field_id in &u.fields {
+                    if let Some(field) = crate_data.index.get(field_id) {
+                        if let Some(field_name) = &field.name {
+                            let field_type = if let ItemEnum::StructField(ty) = &field.inner {
+                                format_type(ty)
+                            } else {
+                                "?".to_string()
+                            };
+                            output.push_str(&format!("- `{}: {}`", field_name, field_type));
+                            if let Some(docs) = &field.docs {
+                                let first_line = docs.lines().next().unwrap_or("").trim();
+                                if !first_line.is_empty() {
+                                    output.push_str(&format!(" - {}", first_line));
+                                }
+                            }
+                            output.push('\n');
+                        }
+                    }
+                }
+                output.push('\n');
+            }
+
+            let (inherent_impls, trait_impls) = collect_impls_for_type(item_id, crate_data);
+
+            if !inherent_impls.is_empty() {
+                output.push_str("**Methods:**\n\n");
+                for impl_block in inherent_impls {
+                    output.push_str(&format_impl_methods(impl_block, crate_data));
+                }
+                output.push('\n');
+            }
+
+            if !trait_impls.is_empty() {
+                let user_impls: Vec<_> = trait_impls
+                    .iter()
+                    .filter(|impl_block| {
+                        !impl_block.is_synthetic && impl_block.blanket_impl.is_none()
+                    })
+                    .collect();
+
+                if !user_impls.is_empty() {
+                    let mut derives = Vec::new();
+                    let mut trait_with_methods = Vec::new();
+
+                    for impl_block in user_impls {
+                        if let Some(trait_ref) = &impl_block.trait_ {
+                            let methods = format_impl_methods(impl_block, crate_data);
+                            if methods.is_empty() {
+                                derives.push(trait_ref.path.as_str());
+                            } else {
+                                trait_with_methods.push((trait_ref, methods));
+                            }
+                        }
+                    }
+
+                    let public_derives: Vec<_> = derives
+                        .into_iter()
+                        .filter(|t| !is_compiler_internal_trait(t))
+                        .collect();
+
+                    if !public_derives.is_empty() {
+                        output.push_str("**Traits:** ");
+                        output.push_str(&public_derives.join(", "));
+                        output.push_str("\n\n");
+                    }
+
+                    if !trait_with_methods.is_empty() {
+                        output.push_str("**Trait Implementations:**\n\n");
+                        for (trait_ref, methods) in trait_with_methods {
+                            output.push_str(&format!("- **{}**\n", trait_ref.path));
+                            for line in methods.lines() {
+                                output.push_str(&format!("  {}\n", line));
+                            }
+                        }
+                        output.push('\n');
+                    }
+                }
+            }
+        }
+        ItemEnum::Macro(m) => {
+            output.push_str(&format!("## {}\n\n", name));
+            output.push_str("*Declarative Macro*\n\n");
+
+            if let Some(docs) = &item.docs {
+                output.push_str(&format!("{}\n\n", docs));
+            }
+
+            if !m.is_empty() {
+                output.push_str("```rust\n");
+                output.push_str(m);
+                output.push_str("\n```\n\n");
+            } else {
+                output.push_str("```rust\n");
+                output.push_str(&format!("{}!(...)", name));
+                output.push_str("\n```\n\n");
+            }
+        }
+        ItemEnum::ProcMacro(pm) => {
+            output.push_str(&format!("## {}\n\n", name));
+
+            let kind_str = match &pm.kind {
+                rustdoc_types::MacroKind::Bang => "Function-like Macro",
+                rustdoc_types::MacroKind::Attr => "Attribute Macro",
+                rustdoc_types::MacroKind::Derive => "Derive Macro",
+            };
+            output.push_str(&format!("*{}*\n\n", kind_str));
+
+            if let Some(docs) = &item.docs {
+                output.push_str(&format!("{}\n\n", docs));
+            }
+
+            output.push_str("```rust\n");
+            match &pm.kind {
+                rustdoc_types::MacroKind::Bang => {
+                    output.push_str(&format!("{}!(...)", name));
+                }
+                rustdoc_types::MacroKind::Attr => {
+                    output.push_str(&format!("#[{}]", name));
+                }
+                rustdoc_types::MacroKind::Derive => {
+                    output.push_str(&format!("#[derive({})]", name));
+                }
+            }
+            output.push_str("\n```\n\n");
+        }
+        ItemEnum::TraitAlias(ta) => {
+            output.push_str(&format!("## {}\n\n", name));
+            output.push_str("*Trait Alias*\n\n");
+
+            if let Some(docs) = &item.docs {
+                output.push_str(&format!("{}\n\n", docs));
+            }
+
+            output.push_str("```rust\n");
+            output.push_str(&format!("trait {}", name));
+
+            if !ta.generics.params.is_empty() {
+                output.push('<');
+                let params: Vec<String> = ta
+                    .generics
+                    .params
+                    .iter()
+                    .map(format_generic_param)
+                    .collect();
+                output.push_str(&params.join(", "));
+                output.push('>');
+            }
+
+            output.push_str(" = ");
+
+            let bounds: Vec<String> = ta
+                .params
+                .iter()
+                .map(|bound| match bound {
+                    rustdoc_types::GenericBound::TraitBound { trait_, .. } => trait_.path.clone(),
+                    rustdoc_types::GenericBound::Outlives(lifetime) => lifetime.clone(),
+                    rustdoc_types::GenericBound::Use(_) => "use<...>".to_string(),
+                })
+                .collect();
+
+            output.push_str(&bounds.join(" + "));
+            output.push_str("\n```\n\n");
         }
         _ => {
             return None;
@@ -662,6 +876,14 @@ fn is_compiler_internal_trait(trait_name: &str) -> bool {
             | "RefUnwindSafe"
             | "UnwindSafe"
     )
+}
+
+fn pluralize(count: usize, singular: &str, plural: &str) -> String {
+    if count == 1 {
+        format!("{} {}", count, singular)
+    } else {
+        format!("{} {}", count, plural)
+    }
 }
 
 fn collect_impls_for_type<'a>(
@@ -887,13 +1109,18 @@ fn generate_crate_index(
         let mut counts = HashMap::new();
         for (_id, item) in items {
             let type_name = match &item.inner {
-                ItemEnum::Struct(_) => "structs",
-                ItemEnum::Enum(_) => "enums",
-                ItemEnum::Function(_) => "functions",
-                ItemEnum::Trait(_) => "traits",
-                ItemEnum::Constant { .. } => "constants",
-                ItemEnum::TypeAlias(_) => "type aliases",
-                ItemEnum::Module(_) => "modules",
+                ItemEnum::Struct(_) => ("struct", "structs"),
+                ItemEnum::Enum(_) => ("enum", "enums"),
+                ItemEnum::Function(_) => ("function", "functions"),
+                ItemEnum::Trait(_) => ("trait", "traits"),
+                ItemEnum::Constant { .. } => ("constant", "constants"),
+                ItemEnum::TypeAlias(_) => ("type alias", "type aliases"),
+                ItemEnum::Module(_) => ("module", "modules"),
+                ItemEnum::Static(_) => ("static", "statics"),
+                ItemEnum::Union(_) => ("union", "unions"),
+                ItemEnum::Macro(_) => ("macro", "macros"),
+                ItemEnum::ProcMacro(_) => ("proc macro", "proc macros"),
+                ItemEnum::TraitAlias(_) => ("trait alias", "trait aliases"),
                 _ => continue,
             };
             *counts.entry(type_name).or_insert(0) += 1;
@@ -904,7 +1131,7 @@ fn generate_crate_index(
         if !counts.is_empty() {
             let mut summary: Vec<String> = counts
                 .iter()
-                .map(|(name, count)| format!("{} {}", count, name))
+                .map(|((singular, plural), count)| pluralize(*count, singular, plural))
                 .collect();
             summary.sort();
             output.push_str(&format!("*{}*\n\n", summary.join(", ")));
@@ -946,6 +1173,11 @@ fn generate_module_file(
             ItemEnum::Constant { .. } => "Constants",
             ItemEnum::TypeAlias(_) => "Type Aliases",
             ItemEnum::Module(_) => "Modules",
+            ItemEnum::Static(_) => "Statics",
+            ItemEnum::Union(_) => "Unions",
+            ItemEnum::Macro(_) => "Macros",
+            ItemEnum::ProcMacro(_) => "Proc Macros",
+            ItemEnum::TraitAlias(_) => "Trait Aliases",
             _ => continue,
         };
         by_type.entry(type_name).or_default().push(item);
@@ -953,10 +1185,15 @@ fn generate_module_file(
 
     let type_order = [
         "Modules",
+        "Macros",
+        "Proc Macros",
         "Structs",
+        "Unions",
         "Enums",
         "Functions",
+        "Statics",
         "Traits",
+        "Trait Aliases",
         "Constants",
         "Type Aliases",
     ];

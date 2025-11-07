@@ -1,3 +1,5 @@
+#![feature(trait_alias)]
+
 //! # Test Crate
 //!
 //! A comprehensive test crate demonstrating all Rust documentation features.
@@ -63,6 +65,10 @@ pub const MAX_SIZE: usize = 100;
 pub const MIN_SIZE: usize = 0;
 
 pub const VERSION: &str = "0.1.0";
+
+pub static COUNTER: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+pub static mut GLOBAL_CONFIG: Option<&str> = None;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -195,6 +201,30 @@ where
     }
 }
 
+#[repr(C)]
+pub union IntOrFloat {
+    pub int_value: i32,
+    pub float_value: f32,
+}
+
+impl IntOrFloat {
+    pub const fn new_int(value: i32) -> Self {
+        Self { int_value: value }
+    }
+
+    pub const fn new_float(value: f32) -> Self {
+        Self { float_value: value }
+    }
+
+    pub unsafe fn as_int(&self) -> i32 {
+        self.int_value
+    }
+
+    pub unsafe fn as_float(&self) -> f32 {
+        self.float_value
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SimpleEnum {
     VariantA,
@@ -284,6 +314,10 @@ pub trait DisplayDebug: fmt::Display + fmt::Debug {
         format!("Display: {}, Debug: {:?}", self, self)
     }
 }
+
+pub trait StringLike = fmt::Display + Clone + Send;
+
+pub trait DebugClone<T> = fmt::Debug + Clone + From<T>;
 
 pub fn simple_function() {
     println!("Hello, world!");

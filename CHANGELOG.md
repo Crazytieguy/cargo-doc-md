@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.10.0] - 2025-11-06
+
+### Added
+- **Extended item type support**: Added support for 5 additional Rust item types:
+  - **Static variables**: Shows mutability and `unsafe` keyword when applicable
+  - **Unions**: Full support with fields, generic parameters, and implementation blocks
+  - **Declarative macros** (`macro_rules!`): Displays complete macro definition
+  - **Procedural macros**: Shows invocation syntax with kind-specific examples (derive, attribute, function-like)
+  - **Trait aliases**: Displays aliased traits with generic parameters and bounds
+
+### Improved
+- **Constant documentation**: Now displays type information (e.g., `*Constant*: \`usize\``)
+- **Macro labeling**: Changed from ambiguous "Macro" to specific "Declarative Macro"
+- **Summary statistics**: Fixed pluralization in module summaries (e.g., "1 struct" instead of "1 structs")
+- **Union documentation**: Includes methods and trait implementations like structs and enums
+
 ## [0.9.0] - 2025-11-06
 
 ### Added
