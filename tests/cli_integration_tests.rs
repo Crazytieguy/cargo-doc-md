@@ -1,6 +1,6 @@
-use std::process::Command;
 use std::fs;
 use std::path::PathBuf;
+use std::process::Command;
 
 fn run_cargo_doc_md(args: &[&str]) -> Result<String, String> {
     let mut cmd = Command::new("cargo");
@@ -67,7 +67,10 @@ fn test_migration_cleanup_behavior() {
     let _ = run_cargo_doc_md(&["-o", output_dir.to_str().unwrap()]);
 
     // The key assertion: old deps/ directory should be removed
-    assert!(!deps_dir.exists(), "Old deps/ directory should be cleaned up on any run");
+    assert!(
+        !deps_dir.exists(),
+        "Old deps/ directory should be cleaned up on any run"
+    );
 
     fs::remove_dir_all(&output_dir).ok();
 }
@@ -85,7 +88,10 @@ fn test_help_output() {
     let combined = format!("{}{}", stdout, stderr);
 
     assert!(output.status.success());
-    assert!(combined.contains("Generate markdown documentation") || combined.contains("Cargo subcommand"));
+    assert!(
+        combined.contains("Generate markdown documentation")
+            || combined.contains("Cargo subcommand")
+    );
     assert!(combined.contains("--json"));
     assert!(combined.contains("--workspace"));
     assert!(combined.contains("--package") || combined.contains("-p,"));
@@ -113,14 +119,15 @@ fn test_package_flag_single() {
     // Test that -p flag is accepted (gracefully fails if package doesn't exist)
     let result = run_cargo_doc_md(&["-p", "nonexistent-crate-12345"]);
     // May succeed (exit 0) with failure message or error out
-    if result.is_err() {
-        let err = result.unwrap_err();
-        // Should NOT contain flag validation errors
-        assert!(!err.contains("Cannot use"));
-    } else {
-        // If it succeeded, output should mention the failure
-        let output = result.unwrap();
-        assert!(output.contains("Failed") || output.contains("failed"));
+    match result {
+        Err(err) => {
+            // Should NOT contain flag validation errors
+            assert!(!err.contains("Cannot use"));
+        }
+        Ok(output) => {
+            // If it succeeded, output should mention the failure
+            assert!(output.contains("Failed") || output.contains("failed"));
+        }
     }
 }
 
@@ -129,14 +136,15 @@ fn test_package_flag_multiple() {
     // Test that multiple -p flags are accepted
     let result = run_cargo_doc_md(&["-p", "nonexistent-crate-1", "-p", "nonexistent-crate-2"]);
     // May succeed (exit 0) with failure messages or error out
-    if result.is_err() {
-        let err = result.unwrap_err();
-        // Should NOT contain flag validation errors
-        assert!(!err.contains("Cannot use"));
-    } else {
-        // If it succeeded, should report failures
-        let output = result.unwrap();
-        assert!(output.contains("Failed") || output.contains("Summary"));
+    match result {
+        Err(err) => {
+            // Should NOT contain flag validation errors
+            assert!(!err.contains("Cannot use"));
+        }
+        Ok(output) => {
+            // If it succeeded, should report failures
+            assert!(output.contains("Failed") || output.contains("Summary"));
+        }
     }
 }
 
@@ -146,8 +154,7 @@ fn test_workspace_flag_in_single_crate() {
     let result = run_cargo_doc_md(&["--workspace", "--no-deps"]);
     // Should succeed - this is a single-member workspace
     // (or fail gracefully if not in workspace)
-    if result.is_err() {
-        let err = result.unwrap_err();
+    if let Err(err) = result {
         // If it errors, should be about workspace detection, not flag validation
         assert!(
             err.contains("workspace") || err.contains("Workspace"),
@@ -161,8 +168,7 @@ fn test_workspace_flag_in_single_crate() {
 fn test_workspace_with_no_deps() {
     // Test that --workspace --no-deps combination is valid
     let result = run_cargo_doc_md(&["--workspace", "--no-deps"]);
-    if result.is_err() {
-        let err = result.unwrap_err();
+    if let Err(err) = result {
         // Should NOT be a flag validation error
         assert!(!err.contains("Cannot use --workspace with"));
     }
@@ -180,7 +186,11 @@ fn test_output_directory_validation_is_file() {
     let result = run_cargo_doc_md(&["-o", temp_file.to_str().unwrap()]);
     assert!(result.is_err());
     let err = result.unwrap_err();
-    assert!(err.contains("is a file, not a directory"), "Error should mention file vs directory: {}", err);
+    assert!(
+        err.contains("is a file, not a directory"),
+        "Error should mention file vs directory: {}",
+        err
+    );
 
     fs::remove_file(&temp_file).ok();
 }
@@ -192,5 +202,9 @@ fn test_output_directory_validation_parent_missing() {
     let result = run_cargo_doc_md(&["-o", nonexistent_parent.to_str().unwrap()]);
     assert!(result.is_err());
     let err = result.unwrap_err();
-    assert!(err.contains("Parent directory does not exist"), "Error should mention parent directory: {}", err);
+    assert!(
+        err.contains("Parent directory does not exist"),
+        "Error should mention parent directory: {}",
+        err
+    );
 }

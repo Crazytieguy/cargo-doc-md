@@ -317,10 +317,7 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
                             })
                         })
                         .collect();
-                    output.push_str(&format!(
-                        "**Tuple Struct**: `({})`\n\n",
-                        types.join(", ")
-                    ));
+                    output.push_str(&format!("**Tuple Struct**: `({})`\n\n", types.join(", ")));
                 }
                 rustdoc_types::StructKind::Unit => {
                     output.push_str("**Unit Struct**\n\n");
@@ -444,11 +441,14 @@ fn format_item(item_id: &rustdoc_types::Id, item: &Item, crate_data: &Crate) -> 
                                             .filter_map(|field_id| {
                                                 crate_data.index.get(field_id).and_then(|f| {
                                                     f.name.as_ref().map(|name| {
-                                                        let field_type = if let ItemEnum::StructField(ty) = &f.inner {
-                                                            format_type(ty)
-                                                        } else {
-                                                            "?".to_string()
-                                                        };
+                                                        let field_type =
+                                                            if let ItemEnum::StructField(ty) =
+                                                                &f.inner
+                                                            {
+                                                                format_type(ty)
+                                                            } else {
+                                                                "?".to_string()
+                                                            };
                                                         format!("{}: {}", name, field_type)
                                                     })
                                                 })

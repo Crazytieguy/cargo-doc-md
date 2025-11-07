@@ -1,4 +1,4 @@
-use cargo_doc_md::{converter, parser, ConversionOptions};
+use cargo_doc_md::{ConversionOptions, converter, parser};
 use std::path::Path;
 
 #[test]
@@ -89,7 +89,10 @@ fn test_struct_formatting() {
     let output = converter::convert_to_markdown_multifile(&crate_data, false)
         .expect("Failed to convert to markdown");
 
-    let lib_content = output.files.get("test_crate.md").expect("lib module not found");
+    let lib_content = output
+        .files
+        .get("test_crate.md")
+        .expect("lib module not found");
 
     assert!(lib_content.contains("## test_crate::UnitStruct"));
     assert!(lib_content.contains("**Unit Struct**"));
@@ -108,7 +111,10 @@ fn test_generic_struct_formatting() {
     let output = converter::convert_to_markdown_multifile(&crate_data, false)
         .expect("Failed to convert to markdown");
 
-    let lib_content = output.files.get("test_crate.md").expect("lib module not found");
+    let lib_content = output
+        .files
+        .get("test_crate.md")
+        .expect("lib module not found");
 
     assert!(lib_content.contains("## test_crate::GenericStruct"));
     assert!(lib_content.contains("**Generic Parameters:**"));
@@ -121,7 +127,10 @@ fn test_enum_formatting() {
     let output = converter::convert_to_markdown_multifile(&crate_data, false)
         .expect("Failed to convert to markdown");
 
-    let lib_content = output.files.get("test_crate.md").expect("lib module not found");
+    let lib_content = output
+        .files
+        .get("test_crate.md")
+        .expect("lib module not found");
 
     assert!(lib_content.contains("## test_crate::SimpleEnum"));
     assert!(lib_content.contains("**Variants:**"));
@@ -136,7 +145,10 @@ fn test_function_formatting() {
     let output = converter::convert_to_markdown_multifile(&crate_data, false)
         .expect("Failed to convert to markdown");
 
-    let functions_content = output.files.get("functions.md").expect("functions module not found");
+    let functions_content = output
+        .files
+        .get("functions.md")
+        .expect("functions module not found");
 
     assert!(functions_content.contains("fn add"));
     assert!(functions_content.contains("fn multiply"));
@@ -149,7 +161,10 @@ fn test_trait_formatting() {
     let output = converter::convert_to_markdown_multifile(&crate_data, false)
         .expect("Failed to convert to markdown");
 
-    let lib_content = output.files.get("test_crate.md").expect("lib module not found");
+    let lib_content = output
+        .files
+        .get("test_crate.md")
+        .expect("lib module not found");
 
     assert!(lib_content.contains("## test_crate::MyTrait"));
     assert!(lib_content.contains("*Trait*"));
@@ -162,7 +177,10 @@ fn test_methods_and_impls() {
     let output = converter::convert_to_markdown_multifile(&crate_data, false)
         .expect("Failed to convert to markdown");
 
-    let lib_content = output.files.get("test_crate.md").expect("lib module not found");
+    let lib_content = output
+        .files
+        .get("test_crate.md")
+        .expect("lib module not found");
 
     assert!(lib_content.contains("**Methods:**"));
 }
@@ -174,7 +192,10 @@ fn test_constants_and_type_aliases() {
     let output = converter::convert_to_markdown_multifile(&crate_data, false)
         .expect("Failed to convert to markdown");
 
-    let lib_content = output.files.get("test_crate.md").expect("lib module not found");
+    let lib_content = output
+        .files
+        .get("test_crate.md")
+        .expect("lib module not found");
 
     assert!(lib_content.contains("MAX_SIZE"));
     assert!(lib_content.contains("Result"));
@@ -193,8 +214,10 @@ fn test_include_private() {
     let public_count = output_public.files.len();
     let private_count = output_private.files.len();
 
-    assert!(private_count >= public_count,
-        "Private output should have at least as many files as public output");
+    assert!(
+        private_count >= public_count,
+        "Private output should have at least as many files as public output"
+    );
 }
 
 #[test]
@@ -221,8 +244,8 @@ fn test_conversion_end_to_end() {
 fn test_legacy_single_file_output() {
     let json_path = Path::new("tests/fixtures/test_crate.json");
     let crate_data = parser::load_rustdoc_json(json_path).expect("Failed to load JSON");
-    let markdown = converter::convert_to_markdown(&crate_data, false)
-        .expect("Failed to convert to markdown");
+    let markdown =
+        converter::convert_to_markdown(&crate_data, false).expect("Failed to convert to markdown");
 
     assert!(markdown.contains("# test_crate"));
     assert!(markdown.contains("## Table of Contents"));

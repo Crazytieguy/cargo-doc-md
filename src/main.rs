@@ -154,24 +154,28 @@ struct Dependency {
 
 fn get_cargo_metadata() -> Result<serde_json::Value> {
     // Get current host platform for filtering platform-specific dependencies
-    let host_triple = std::env::var("CARGO_BUILD_TARGET")
-        .or_else(|_| {
-            let output = Command::new("rustc")
-                .args(["-vV"])
-                .output()
-                .context("Failed to run rustc")?;
+    let host_triple = std::env::var("CARGO_BUILD_TARGET").or_else(|_| {
+        let output = Command::new("rustc")
+            .args(["-vV"])
+            .output()
+            .context("Failed to run rustc")?;
 
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            stdout
-                .lines()
-                .find(|line| line.starts_with("host:"))
-                .and_then(|line| line.split_whitespace().nth(1))
-                .map(String::from)
-                .context("Failed to parse host triple from rustc")
-        })?;
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        stdout
+            .lines()
+            .find(|line| line.starts_with("host:"))
+            .and_then(|line| line.split_whitespace().nth(1))
+            .map(String::from)
+            .context("Failed to parse host triple from rustc")
+    })?;
 
     let output = Command::new("cargo")
-        .args(["metadata", "--format-version=1", "--filter-platform", &host_triple])
+        .args([
+            "metadata",
+            "--format-version=1",
+            "--filter-platform",
+            &host_triple,
+        ])
         .output()
         .context("Failed to run 'cargo metadata'")?;
 
@@ -229,10 +233,16 @@ fn cleanup_old_structure(output_dir: &Path) -> Result<()> {
 
     let old_deps_dir = output_dir.join("deps");
     if old_deps_dir.exists() && old_deps_dir.is_dir() {
-        println!("⚠  Cleaning up old directory structure ({})", old_deps_dir.display());
+        println!(
+            "⚠  Cleaning up old directory structure ({})",
+            old_deps_dir.display()
+        );
         if let Err(e) = fs::remove_dir_all(&old_deps_dir) {
             println!("⚠  Could not remove old deps directory: {}", e);
-            println!("   You may need to manually delete: {}", old_deps_dir.display());
+            println!(
+                "   You may need to manually delete: {}",
+                old_deps_dir.display()
+            );
         } else {
             println!("✓ Migrated to new flat structure\n");
         }
@@ -241,17 +251,16 @@ fn cleanup_old_structure(output_dir: &Path) -> Result<()> {
 }
 
 fn document_specific_packages(metadata: &serde_json::Value, cli: &Cli) -> Result<()> {
-    println!("📦 Documenting {} specific package(s) and their dependencies...", cli.package.len());
+    println!(
+        "📦 Documenting {} specific package(s) and their dependencies...",
+        cli.package.len()
+    );
 
     let packages = metadata["packages"]
         .as_array()
         .context("Missing 'packages' in metadata")?;
 
-    let target_dir = PathBuf::from(
-        metadata["target_directory"]
-            .as_str()
-            .unwrap_or("target")
-    );
+    let target_dir = PathBuf::from(metadata["target_directory"].as_str().unwrap_or("target"));
 
     // For -p mode, don't filter out workspace member dependencies
     // User explicitly requested specific packages, so document them and ALL their deps
@@ -266,12 +275,13 @@ fn document_specific_packages(metadata: &serde_json::Value, cli: &Cli) -> Result
         println!("\n🔨 Generating docs for '{}'...", package_name);
 
         // Find package in metadata
-        let package = packages.iter().find(|p| {
-            p["name"].as_str() == Some(package_name)
-        });
+        let package = packages
+            .iter()
+            .find(|p| p["name"].as_str() == Some(package_name));
 
         let dep = if let Some(pkg) = package {
-            let name = pkg["name"].as_str()
+            let name = pkg["name"]
+                .as_str()
                 .context("Package missing 'name' field in metadata")?
                 .to_string();
             let version = pkg["version"].as_str().unwrap_or("").to_string();
@@ -283,17 +293,32 @@ fn document_specific_packages(metadata: &serde_json::Value, cli: &Cli) -> Result
             }
         };
 
-        match document_single_dependency(&dep, &cli.output, &target_dir, metadata, cli.include_private) {
+        match document_single_dependency(
+            &dep,
+            &cli.output,
+            &target_dir,
+            metadata,
+            cli.include_private,
+        ) {
             Ok(true) => {
                 // Successfully documented
                 successful_packages.push(package_name.clone());
-                println!("  ✓ {} → {}/{}/index.md", package_name, cli.output.display(), package_name);
+                println!(
+                    "  ✓ {} → {}/{}/index.md",
+                    package_name,
+                    cli.output.display(),
+                    package_name
+                );
 
                 // Get dependencies for this package if not --no-deps
                 if !cli.no_deps {
                     if let Some(pkg) = package {
                         if let Some(pkg_id) = pkg["id"].as_str() {
-                            match get_all_dependencies_recursive(metadata, pkg_id, &workspace_member_ids) {
+                            match get_all_dependencies_recursive(
+                                metadata,
+                                pkg_id,
+                                &workspace_member_ids,
+                            ) {
                                 Ok(deps) => {
                                     for (name, version) in deps {
                                         if !successful_packages.contains(&name) {
@@ -302,7 +327,10 @@ fn document_specific_packages(metadata: &serde_json::Value, cli: &Cli) -> Result
                                     }
                                 }
                                 Err(e) => {
-                                    println!("  ⚠ Warning: Could not get dependencies for '{}': {}", package_name, e);
+                                    println!(
+                                        "  ⚠ Warning: Could not get dependencies for '{}': {}",
+                                        package_name, e
+                                    );
                                 }
                             }
                         }
@@ -344,7 +372,11 @@ fn document_specific_packages(metadata: &serde_json::Value, cli: &Cli) -> Result
         println!("\n📊 Summary:");
         println!("  ✓ Packages documented: {}", successful_packages.len());
         if !failed_packages.is_empty() {
-            println!("  ✗ Failed: {} ({})", failed_packages.len(), failed_packages.join(", "));
+            println!(
+                "  ✗ Failed: {} ({})",
+                failed_packages.len(),
+                failed_packages.join(", ")
+            );
         }
 
         generate_master_index(&cli.output, None, &[], &successful_packages)?;
@@ -395,7 +427,9 @@ fn document_current_crate(metadata: &serde_json::Value, cli: &Cli) -> Result<Opt
         let stderr = String::from_utf8_lossy(&output.stderr);
 
         if stderr.contains("no library targets found") {
-            println!("⚠ No library target found in current crate, skipping current crate documentation");
+            println!(
+                "⚠ No library target found in current crate, skipping current crate documentation"
+            );
             return Ok(None);
         }
 
@@ -427,13 +461,11 @@ fn document_current_crate(metadata: &serde_json::Value, cli: &Cli) -> Result<Opt
         .to_string();
 
     // Get the library target name (may differ from package name)
-    let lib_target_name = get_lib_target_name(root_package)
-        .unwrap_or_else(|| crate_name.replace("-", "_"));
+    let lib_target_name =
+        get_lib_target_name(root_package).unwrap_or_else(|| crate_name.replace("-", "_"));
 
     // Find the generated JSON file
-    let target_dir = metadata["target_directory"]
-        .as_str()
-        .unwrap_or("target");
+    let target_dir = metadata["target_directory"].as_str().unwrap_or("target");
     let json_path = PathBuf::from(target_dir)
         .join("doc")
         .join(format!("{}.json", lib_target_name));
@@ -478,7 +510,12 @@ fn try_document_dependencies(
             Ok(true) => {
                 // Successfully documented
                 successful.push(dep.name.clone());
-                println!("  ✓ {} → {}/{}/index.md", dep.name, output_dir.display(), dep.name);
+                println!(
+                    "  ✓ {} → {}/{}/index.md",
+                    dep.name,
+                    output_dir.display(),
+                    dep.name
+                );
             }
             Ok(false) => {
                 // Skipped (e.g., binary-only crate) - not added to successful or failed
@@ -509,11 +546,7 @@ fn document_all_dependencies(metadata: &serde_json::Value, cli: &Cli) -> Result<
         return Ok(Vec::new());
     }
 
-    let target_dir = PathBuf::from(
-        metadata["target_directory"]
-            .as_str()
-            .unwrap_or("target")
-    );
+    let target_dir = PathBuf::from(metadata["target_directory"].as_str().unwrap_or("target"));
 
     println!("📦 Documenting {} dependencies...", deps_to_document.len());
 
@@ -543,11 +576,7 @@ fn document_workspace(metadata: &serde_json::Value, cli: &Cli) -> Result<()> {
         }
     );
 
-    let target_dir = PathBuf::from(
-        metadata["target_directory"]
-            .as_str()
-            .unwrap_or("target")
-    );
+    let target_dir = PathBuf::from(metadata["target_directory"].as_str().unwrap_or("target"));
 
     let workspace_member_ids: Vec<String> = metadata["workspace_members"]
         .as_array()
@@ -559,19 +588,26 @@ fn document_workspace(metadata: &serde_json::Value, cli: &Cli) -> Result<()> {
         })
         .unwrap_or_default();
 
-    let workspace_member_names: std::collections::HashSet<String> = workspace_members
-        .iter()
-        .map(|m| m.name.clone())
-        .collect();
+    let workspace_member_names: std::collections::HashSet<String> =
+        workspace_members.iter().map(|m| m.name.clone()).collect();
 
     let mut successful_members = Vec::new();
     let mut failed_members = Vec::new();
     let mut all_deps: HashMap<String, String> = HashMap::new();
 
     for member in &workspace_members {
-        println!("🔨 Generating docs for workspace member '{}'...", member.name);
+        println!(
+            "🔨 Generating docs for workspace member '{}'...",
+            member.name
+        );
 
-        match document_single_dependency(member, &cli.output, &target_dir, metadata, cli.include_private) {
+        match document_single_dependency(
+            member,
+            &cli.output,
+            &target_dir,
+            metadata,
+            cli.include_private,
+        ) {
             Ok(true) => {
                 // Successfully documented
                 successful_members.push(member.name.clone());
@@ -585,7 +621,11 @@ fn document_workspace(metadata: &serde_json::Value, cli: &Cli) -> Result<()> {
                 if !cli.no_deps {
                     match get_package_id(metadata, &member.name, &member.version) {
                         Ok(member_id) => {
-                            match get_all_dependencies_recursive(metadata, &member_id, &workspace_member_ids) {
+                            match get_all_dependencies_recursive(
+                                metadata,
+                                &member_id,
+                                &workspace_member_ids,
+                            ) {
                                 Ok(member_deps) => {
                                     for (name, version) in member_deps {
                                         if !workspace_member_names.contains(&name) {
@@ -594,12 +634,18 @@ fn document_workspace(metadata: &serde_json::Value, cli: &Cli) -> Result<()> {
                                     }
                                 }
                                 Err(e) => {
-                                    println!("  ⚠ Warning: Could not get dependencies for '{}': {}", member.name, e);
+                                    println!(
+                                        "  ⚠ Warning: Could not get dependencies for '{}': {}",
+                                        member.name, e
+                                    );
                                 }
                             }
                         }
                         Err(e) => {
-                            println!("  ⚠ Warning: Could not find package ID for '{}': {}", member.name, e);
+                            println!(
+                                "  ⚠ Warning: Could not find package ID for '{}': {}",
+                                member.name, e
+                            );
                         }
                     }
                 }
@@ -616,7 +662,10 @@ fn document_workspace(metadata: &serde_json::Value, cli: &Cli) -> Result<()> {
     }
 
     if !cli.no_deps && !all_deps.is_empty() {
-        println!("\n📦 Documenting {} unique external dependencies...", all_deps.len());
+        println!(
+            "\n📦 Documenting {} unique external dependencies...",
+            all_deps.len()
+        );
         let mut deps_to_document: Vec<Dependency> = all_deps
             .into_iter()
             .map(|(name, version)| Dependency { name, version })
@@ -633,15 +682,13 @@ fn document_workspace(metadata: &serde_json::Value, cli: &Cli) -> Result<()> {
 
         print_documentation_summary(&successful_deps, &failed_deps);
 
-        generate_master_index(
-            &cli.output,
-            None,
-            &successful_members,
-            &successful_deps,
-        )?;
+        generate_master_index(&cli.output, None, &successful_members, &successful_deps)?;
     } else {
         println!("\n📊 Summary:");
-        println!("  ✓ Workspace members documented: {}", successful_members.len());
+        println!(
+            "  ✓ Workspace members documented: {}",
+            successful_members.len()
+        );
         if !failed_members.is_empty() {
             println!(
                 "  ✗ Failed: {} ({})",
@@ -673,7 +720,9 @@ fn get_package_id(metadata: &serde_json::Value, name: &str, version: &str) -> Re
     bail!("Package {} {} not found in metadata", name, version)
 }
 
-fn build_normal_dependency_graph(metadata: &serde_json::Value) -> Result<HashMap<String, Vec<String>>> {
+fn build_normal_dependency_graph(
+    metadata: &serde_json::Value,
+) -> Result<HashMap<String, Vec<String>>> {
     use std::collections::HashSet;
 
     let packages = metadata["packages"]
@@ -723,7 +772,10 @@ fn build_normal_dependency_graph(metadata: &serde_json::Value) -> Result<HashMap
                 for dep_id in dep_ids {
                     if let Some(dep_id_str) = dep_id.as_str() {
                         // Check if this dependency is in the normal deps list
-                        if let Some(dep_pkg) = packages.iter().find(|p| p["id"].as_str() == Some(dep_id_str)) {
+                        if let Some(dep_pkg) = packages
+                            .iter()
+                            .find(|p| p["id"].as_str() == Some(dep_id_str))
+                        {
                             if let Some(dep_name) = dep_pkg["name"].as_str() {
                                 if normal_dep_names.contains(dep_name) {
                                     filtered_deps.push(dep_id_str.to_string());
@@ -777,8 +829,13 @@ fn get_all_dependencies_recursive(
                 }
 
                 // Add to result if not already there
-                if let Some(pkg) = packages.iter().find(|p| p["id"].as_str() == Some(dep_id.as_str())) {
-                    if let (Some(name), Some(version)) = (pkg["name"].as_str(), pkg["version"].as_str()) {
+                if let Some(pkg) = packages
+                    .iter()
+                    .find(|p| p["id"].as_str() == Some(dep_id.as_str()))
+                {
+                    if let (Some(name), Some(version)) =
+                        (pkg["name"].as_str(), pkg["version"].as_str())
+                    {
                         // HashMap automatically deduplicates by name (matching cargo doc behavior)
                         all_deps.insert(name.to_string(), version.to_string());
                     }
@@ -843,7 +900,10 @@ fn get_workspace_members(metadata: &serde_json::Value) -> Result<Vec<Dependency>
     for member_id in workspace_members {
         let member_id_str = member_id.as_str().context("Invalid workspace member ID")?;
 
-        if let Some(pkg) = packages.iter().find(|p| p["id"].as_str() == Some(member_id_str)) {
+        if let Some(pkg) = packages
+            .iter()
+            .find(|p| p["id"].as_str() == Some(member_id_str))
+        {
             if let (Some(name), Some(version)) = (pkg["name"].as_str(), pkg["version"].as_str()) {
                 members.push(Dependency {
                     name: name.to_string(),
@@ -909,11 +969,19 @@ fn document_single_dependency(
             .take(2)
             .collect();
         if !error_lines.is_empty() {
-            bail!("Failed to build '{}':\n{}\n\nRun 'cargo build -p {}' for full details",
-                  dep.name, error_lines.join("\n"), package_spec);
+            bail!(
+                "Failed to build '{}':\n{}\n\nRun 'cargo build -p {}' for full details",
+                dep.name,
+                error_lines.join("\n"),
+                package_spec
+            );
         }
-        bail!("Failed to build '{}' (exit code: {})\nRun 'cargo build -p {}' for details",
-              dep.name, output.status, package_spec);
+        bail!(
+            "Failed to build '{}' (exit code: {})\nRun 'cargo build -p {}' for details",
+            dep.name,
+            output.status,
+            package_spec
+        );
     }
 
     // Find the package in metadata to get lib target name
@@ -974,8 +1042,7 @@ fn generate_master_index(
         content.push_str("## Current Crate\n\n");
         content.push_str(&format!(
             "- [`{}`]({}/index.md)\n\n",
-            crate_name,
-            crate_name
+            crate_name, crate_name
         ));
     }
 
@@ -1005,13 +1072,16 @@ fn generate_master_index(
     }
 
     content.push_str("---\n\n");
-    content.push_str(
-        "Generated with [cargo-doc-md](https://github.com/Crazytieguy/cargo-doc-md)\n",
-    );
+    content
+        .push_str("Generated with [cargo-doc-md](https://github.com/Crazytieguy/cargo-doc-md)\n");
 
     // Ensure output directory exists
-    fs::create_dir_all(output_dir)
-        .with_context(|| format!("Failed to create output directory: {}", output_dir.display()))?;
+    fs::create_dir_all(output_dir).with_context(|| {
+        format!(
+            "Failed to create output directory: {}",
+            output_dir.display()
+        )
+    })?;
 
     let index_path = output_dir.join("index.md");
     fs::write(&index_path, content)
