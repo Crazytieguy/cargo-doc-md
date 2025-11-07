@@ -1042,7 +1042,8 @@ fn generate_master_index(
         content.push_str("## Current Crate\n\n");
         content.push_str(&format!(
             "- [`{}`]({}/index.md)\n\n",
-            crate_name, crate_name
+            crate_name,
+            crate_name.replace("-", "_")
         ));
     }
 
@@ -1054,7 +1055,7 @@ fn generate_master_index(
         ));
 
         for member in workspace_members {
-            let member_path = format!("{}/index.md", member);
+            let member_path = format!("{}/index.md", member.replace("-", "_"));
             content.push_str(&format!("- [`{}`]({})\n", member, member_path));
         }
         content.push('\n');
@@ -1065,7 +1066,7 @@ fn generate_master_index(
         content.push_str(&format!("## Dependencies ({})\n\n", dependencies.len()));
 
         for dep in dependencies {
-            let dep_path = format!("{}/index.md", dep);
+            let dep_path = format!("{}/index.md", dep.replace("-", "_"));
             content.push_str(&format!("- [`{}`]({})\n", dep, dep_path));
         }
         content.push('\n');

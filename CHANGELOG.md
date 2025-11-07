@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.10.1] - 2025-11-07
+
+### Fixed
+- **Master index links**: Fixed broken links for crates with hyphens in their names (index now correctly uses underscores to match directory structure)
+
 ## [0.10.0] - 2025-11-06
 
 ### Added
