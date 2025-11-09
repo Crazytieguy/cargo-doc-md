@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.10.3] - 2025-11-08
+
+### Fixed
+- **Output directory creation**: Now automatically creates parent directories for output path instead of failing when they don't exist
+
 ## [0.10.2] - 2025-11-07
 
 ### Fixed

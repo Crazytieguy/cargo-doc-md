@@ -197,14 +197,30 @@ fn test_output_directory_validation_is_file() {
 
 #[test]
 fn test_output_directory_validation_parent_missing() {
-    let nonexistent_parent = PathBuf::from("/nonexistent_parent_dir_12345/output");
+    let temp_dir = std::env::temp_dir();
+    let nested_path = temp_dir
+        .join("cargo_doc_md_test_parent_12345")
+        .join("nested")
+        .join("output");
 
-    let result = run_cargo_doc_md(&["-o", nonexistent_parent.to_str().unwrap()]);
+    let result = run_cargo_doc_md(&[
+        "-o",
+        nested_path.to_str().unwrap(),
+        "--json",
+        "nonexistent.json",
+    ]);
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert!(
-        err.contains("Parent directory does not exist"),
-        "Error should mention parent directory: {}",
+        err.contains("JSON file not found"),
+        "Should fail with JSON not found: {}",
         err
     );
+
+    assert!(
+        !nested_path.parent().unwrap().exists(),
+        "Parent directory should not be created on early validation failure"
+    );
+
+    fs::remove_dir_all(temp_dir.join("cargo_doc_md_test_parent_12345")).ok();
 }

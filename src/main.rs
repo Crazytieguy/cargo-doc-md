@@ -198,16 +198,6 @@ fn validate_output_directory(output_dir: &Path) -> Result<()> {
         );
     }
 
-    if let Some(parent) = output_dir.parent() {
-        if !parent.exists() {
-            bail!(
-                "Parent directory does not exist: {}\n\
-                 Please create the parent directory first.",
-                parent.display()
-            );
-        }
-    }
-
     Ok(())
 }
 
