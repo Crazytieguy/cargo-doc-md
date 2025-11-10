@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.11.0] - 2025-11-10
+
+### Added
+- **Per-crate cleanup**: Each crate's output directory is now removed before regenerating documentation, eliminating stale module files from previous versions
+
+### Fixed
+- **JSON mode cleanup**: Now correctly uses crate name from JSON metadata instead of filename when cleaning up output directory
+
+### Removed
+- Legacy v0.7.x migration code (no longer needed)
+
 ## [0.10.3] - 2025-11-08
 
 ### Fixed

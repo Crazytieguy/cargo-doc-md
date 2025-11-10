@@ -55,27 +55,6 @@ fn test_json_validation_path_is_directory() {
 }
 
 #[test]
-fn test_migration_cleanup_behavior() {
-    let output_dir = PathBuf::from("target/doc-md-test-migration");
-    let deps_dir = output_dir.join("deps");
-
-    fs::remove_dir_all(&output_dir).ok();
-    fs::create_dir_all(&deps_dir).unwrap();
-    fs::write(deps_dir.join("test.txt"), "test content").unwrap();
-
-    // Run - may succeed or fail, but deps/ should be cleaned up
-    let _ = run_cargo_doc_md(&["-o", output_dir.to_str().unwrap()]);
-
-    // The key assertion: old deps/ directory should be removed
-    assert!(
-        !deps_dir.exists(),
-        "Old deps/ directory should be cleaned up on any run"
-    );
-
-    fs::remove_dir_all(&output_dir).ok();
-}
-
-#[test]
 fn test_help_output() {
     let mut cmd = Command::new("cargo");
     cmd.arg("run").arg("--").arg("--help");
@@ -110,6 +89,37 @@ fn test_output_directory_creation() {
 
     // Key assertion: output directory should be created
     assert!(output_dir.exists(), "Output directory should be created");
+
+    fs::remove_dir_all(&output_dir).ok();
+}
+
+#[test]
+fn test_cleanup_removes_stale_files() {
+    let output_dir = PathBuf::from("target/doc-md-test-cleanup");
+
+    fs::remove_dir_all(&output_dir).ok();
+
+    let result = run_cargo_doc_md(&["-o", output_dir.to_str().unwrap(), "--no-deps"]);
+    assert!(result.is_ok(), "First doc generation should succeed");
+
+    let crate_dir = output_dir.join("cargo_doc_md");
+    assert!(crate_dir.exists(), "Crate directory should be created");
+
+    let sentinel_file = crate_dir.join("stale_module.md");
+    fs::write(&sentinel_file, "This file should be removed on next run").unwrap();
+    assert!(sentinel_file.exists(), "Sentinel file should exist");
+
+    let result = run_cargo_doc_md(&["-o", output_dir.to_str().unwrap(), "--no-deps"]);
+    assert!(result.is_ok(), "Second doc generation should succeed");
+
+    assert!(
+        !sentinel_file.exists(),
+        "Sentinel file should be removed during cleanup"
+    );
+    assert!(
+        crate_dir.exists(),
+        "Crate directory should still exist with fresh docs"
+    );
 
     fs::remove_dir_all(&output_dir).ok();
 }

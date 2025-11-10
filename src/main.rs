@@ -84,9 +84,6 @@ fn main() -> Result<()> {
     // Validate output directory
     validate_output_directory(&cli.output)?;
 
-    // Clean up old directory structure (migration from v0.7.x)
-    cleanup_old_structure(&cli.output)?;
-
     // Explicit JSON file - just convert that file
     if let Some(json_path) = cli.json.as_ref() {
         if !json_path.exists() {
@@ -95,6 +92,29 @@ fn main() -> Result<()> {
         if !json_path.is_file() {
             bail!("Path is not a file: {}", json_path.display());
         }
+
+        // Load the JSON to extract the actual crate name from metadata
+        let crate_data = cargo_doc_md::parser::load_rustdoc_json(json_path)?;
+        let root_item = crate_data
+            .index
+            .get(&crate_data.root)
+            .context("Root item not found in rustdoc JSON")?;
+        let crate_name = root_item
+            .name
+            .as_deref()
+            .context("Crate name not found in rustdoc JSON")?;
+
+        // Remove existing crate directory to ensure clean documentation
+        let crate_output_dir = cli.output.join(crate_name);
+        if crate_output_dir.exists() {
+            std::fs::remove_dir_all(&crate_output_dir).with_context(|| {
+                format!(
+                    "Failed to remove existing crate directory: {}",
+                    crate_output_dir.display()
+                )
+            })?;
+        }
+
         let options = ConversionOptions {
             input_path: json_path,
             output_dir: &cli.output,
@@ -102,12 +122,6 @@ fn main() -> Result<()> {
         };
 
         cargo_doc_md::convert_json_file(&options)?;
-
-        // Determine the crate name from the JSON file path
-        let crate_name = json_path
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .context("Invalid JSON filename - could not extract crate name")?;
 
         // Generate master index for consistency with other modes
         generate_master_index(&cli.output, None, &[], &[crate_name.to_string()])?;
@@ -215,28 +229,6 @@ fn check_nightly_toolchain() -> Result<()> {
         );
     }
 
-    Ok(())
-}
-
-fn cleanup_old_structure(output_dir: &Path) -> Result<()> {
-    use std::fs;
-
-    let old_deps_dir = output_dir.join("deps");
-    if old_deps_dir.exists() && old_deps_dir.is_dir() {
-        println!(
-            "⚠  Cleaning up old directory structure ({})",
-            old_deps_dir.display()
-        );
-        if let Err(e) = fs::remove_dir_all(&old_deps_dir) {
-            println!("⚠  Could not remove old deps directory: {}", e);
-            println!(
-                "   You may need to manually delete: {}",
-                old_deps_dir.display()
-            );
-        } else {
-            println!("✓ Migrated to new flat structure\n");
-        }
-    }
     Ok(())
 }
 
@@ -466,6 +458,17 @@ fn document_current_crate(metadata: &serde_json::Value, cli: &Cli) -> Result<Opt
 
     println!("✓ JSON generated successfully");
     println!("🔄 Converting to markdown...");
+
+    // Remove existing crate directory to ensure clean documentation
+    let crate_output_dir = cli.output.join(&lib_target_name);
+    if crate_output_dir.exists() {
+        std::fs::remove_dir_all(&crate_output_dir).with_context(|| {
+            format!(
+                "Failed to remove existing crate directory: {}",
+                crate_output_dir.display()
+            )
+        })?;
+    }
 
     // Convert to markdown
     let options = ConversionOptions {
@@ -999,6 +1002,17 @@ fn document_single_dependency(
 
     if !json_path.exists() {
         bail!("Generated JSON file not found at {}", json_path.display());
+    }
+
+    // Remove existing crate directory to ensure clean documentation
+    let crate_output_dir = output_base.join(&lib_target_name);
+    if crate_output_dir.exists() {
+        std::fs::remove_dir_all(&crate_output_dir).with_context(|| {
+            format!(
+                "Failed to remove existing crate directory: {}",
+                crate_output_dir.display()
+            )
+        })?;
     }
 
     // Convert to markdown directly in output directory
